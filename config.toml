@@ -1,0 +1,8 @@
+baseURL = "http://example.org/"
+languageCode = "en-us"
+title = "Boring Guy"
+theme = "HugoTeX"
+
+[author]
+  name = "Adil Zouitine"
+  #abstract = "I'm a software engineer and a coffee enthusiast in Japan. My primary interest lies in the area of natural language processing."
