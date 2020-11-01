@@ -1,7 +1,7 @@
 ---
 title: "About me"
 ---
-{{< figure library="true" src="boring-guy.png" title="Me" lightbox="true" >}}
+{{< figure library="true" src="img/boring-guy.png" title="Me" lightbox="true" >}}
 <div align="center" >
   <img height="300px" src="img/boring-guy.png" alt="Me">
   <br>
