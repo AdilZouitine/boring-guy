@@ -3,6 +3,7 @@ title: "About me"
 ---
 
 {{< figure library="true" src="/img/about/boring-guy.png" lightbox="true" >}}
+
 Hello world,
 I'm **Adil Zouitine** a **boring guy** who does boring things.
 I'm **Research engineer** in machine learning at IRT Saint-Exupery. My current work is on Multi-Agent Adversarial Reinforcement Learning (MARL) with Game Theory.
