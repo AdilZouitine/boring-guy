@@ -3,7 +3,7 @@ title: "About me"
 ---
 
 Hello world,
-I'm Adil Zouitine a boring guy who does things.
+I'm Adil Zouitine a boring guy who does boring things.
 I'm Research engineer in machine learning at IRT Saint-Exupery. My current work is on Multi-Agent Adversarial Reinforcement Learning (MARL) with Game Theory.
 My university background is a mix of mathematics and computer science.
 I like to do open source and machine learning competitions on my free time.
