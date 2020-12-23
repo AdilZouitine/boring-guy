@@ -29,7 +29,7 @@ The scope of this blog post is to explain the concept of masking and to illustra
 - A notion of the [Maskovian Decision Processes](https://www.wikiwand.com/en/Markov_decision_process#:~:text=In%20mathematics%2C%20a%20Markov%20decision,control%20of%20a%20decision%20maker.) (MDP)
 - Notions of [Policy gradient](https://papers.nips.cc/paper/1999/file/464d828b85b0bed98e80ade0a5c43b0f-Paper.pdf) and [Q-Learning](https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf) algorithms
 - Some knowledge of [Pytorch](https://pytorch.org/) or the basics of [Numpy](https://numpy.org/)
-
+- A notion of [Self-attention](https://arxiv.org/pdf/1706.03762.pdf), if you want to understand what this concept is, I invite you to read this great article explaining the [transformers](http://peterbloem.nl/blog/transformers) [6]. 
 
 ----
 
@@ -99,7 +99,7 @@ Considering that we have set the value of logits associated with impossible acti
 Now let's practice and implement action masking for a **discrete** action space and a policy-based algorithm.
 For this implementation I was inspired by Costa Huang paper [7].
 
-I overloaded Pytorch's Categorical class and added an optional mask argument.
+I overloaded `Pytorch`'s `Categorical` class and added an optional mask argument.
 {{< math.inline >}}
 <p>
 If the mask (boolean) is present I replace the logit values to be masked by to \(-\infty\).
@@ -181,24 +181,70 @@ print(head_masked.entropy())
 
 # Feature level 
 
+Open ai introduced masking at the feature extraction level in the paper Hide and seek [8].
+Each object in the scene is embedded and passed into a masked attention block similar to the one proposed in the paper Attention is all you need [5].
+Except that the attention is not computed over time but **between the objects** in the scene.
+If the agent does not have an object in his field of view, then this **object will be masked** during the attention computation.
 
+If this is still unclear to you don't worry, we will explain it step by step using figure and code. 
 
+Let's suppose a grid world where the agent is a panda and his objective is to eat the watermelon, and avoid the dragon and the scorpion.  
 {{< figure library="true" src="/img/masking-rl/grid_rl_no_tree.png" lightbox="true" >}}
-*Figure 2 :*
+*Figure 2 : Grid world with 4 objects: a panda, a watermelon, a scorpion and a dragon*
+
+Each of the objects is represented by a vector of dimentsion 3.
+The first component of the vector corresponds to its position on the x-axis in the grid. The second component of the vector corresponds to its position on the y-axis in the grid.
+Finally, the last component of the vector corresponds to the type of object (0: panda, 1: watermelon, 2: scorpion, 3: dragon).
+
+
+We can represent this observation as a set as follow:
+$$
+s_{t} = \\{
+\begin{pmatrix}
+   3 &
+   0 &
+   0 
+\end{pmatrix} , 
+\begin{pmatrix}
+   2 &
+   6 &
+   1
+\end{pmatrix}, 
+\begin{pmatrix}
+   6 &
+   4 &
+   2
+\end{pmatrix},
+\begin{pmatrix}
+   6 &
+   0 &
+   3
+\end{pmatrix}
+\\}
+$$
+
+Let's take the point of view of pandas for this observation he has in his field of view all the elements of the scene.
+Therefore we can compute the attention score two by two between all the objects in the scene.
 
 {{< figure library="true" src="/img/masking-rl/grid_4_elem_all.svg" lightbox="true" >}}
-*Figure 3 :*
+*Figure 3 : Self attention computation graph when the panda sees all other objects*
 
+Here a few lines of code to see how the observation is represented as a tensor.
+
+**Note**: Whatever the order of the objects, the self-attention operation is invariant to the permutation.
 ```python
 # Observation
 # Element set => Panda, Watermelon, Scorpion, Dragon
-observation = torch.randn(1, 4, 3)
+
+observation = torch.tensor([[[3, 0, 0], [2, 6, 1], [6, 4, 2], [6, 0, 3]]])
 print(observation.size())
 # torch.Size([1, 4, 3])  batch size, nb elem set, nb feature
 ```
 
 {{< figure library="true" src="/img/masking-rl/grid_rl.png" lightbox="true" >}}
 *Figure 4 :*
+
+The scene in *figure 5* is similar to *figure 2*, however 3 trees obstruct the vision of the pandas and he cannot see the scorpion now.
 
 {{< figure library="true" src="/img/masking-rl/grid_4_elem_scorpion_nope.svg" lightbox="true" >}}
 *Figure 5 :*
@@ -212,20 +258,9 @@ print(mask)
 print(mask.size())
 # torch.Size([1, 4]) # batch size, nb elem set
 ```
-
-{{< figure library="true" src="/img/masking-rl/self-attention.svg" lightbox="true" >}}
-*Figure 6 :*
-
 $$
 \text { Attention }(Q, K, V, Mask)=\operatorname{softmax}\left(\frac{Mask(Q K^{T})}{\sqrt{d_{k}}}\right) V
 $$
-
-{{< figure library="true" src="/img/masking-rl/mha.svg" lightbox="true" >}}
-*Figure 7 :*
-
-
-
-
 
 $$
 \text { MultiHead }(Q, K, V, Mask)= \operatorname{Concat}(\text { head } {1}, \ldots, \text { head }_{h}) W^{O}
@@ -234,6 +269,11 @@ $$
 $$
 \text { where head }{i} = \text { Attention }(Q W_{i}^{Q}, K W_{i}^{K}, V W_{i}^{V}, Mask)
 $$
+
+{{< figure library="true" src="/img/masking-rl/multi_head_attention.svg" lightbox="true" >}}
+*Figure 6 :*
+
+
 
 ```python
 import torch
@@ -310,10 +350,10 @@ torch.eq(output_without_mask, output_with_mask)
 ```
 {{< load-plotly >}}
 {{< plotly json="/files/plotly/masking-rl/attention_without_mask.json" height="450px" >}}
-*Figure 8 :*
+*Figure 7 :*
 
 {{< plotly json="/files/plotly/masking-rl/attention_with_mask.json" height="450px" >}}
-*Figure 9 :*
+*Figure 8 :*
 
 ----
 
@@ -333,7 +373,7 @@ $$
 $$
 
 {{< figure library="true" src="/img/masking-rl/masking_grid.svg" lightbox="true" >}}
-*Figure 10 :*
+*Figure 9 :*
 
 ```python
 from typing import Optional
