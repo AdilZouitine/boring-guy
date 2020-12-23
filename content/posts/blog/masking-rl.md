@@ -340,9 +340,9 @@ class MultiHeadAttention(nn.Module):
         dots = einsum("b h i d, b h j d -> b h i j", q, k) * self.scale
 
         if mask is not None:
-            mask_value = torch.finfo(dots.dtype).max
+            mask_value = torch.finfo(dots.dtype).min
             mask = mask[:, None, :, None] * mask[:, None, None, :]
-            dots.masked_fill_(~mask, -mask_value)
+            dots.masked_fill_(~mask, mask_value)
 
         # follow the softmax,q,d,v equation in the paper
         attn = dots.softmax(dim=-1)
@@ -367,26 +367,29 @@ print(output_without_mask.size())
 # torch.Size([1, 4, 3])  batch size, nb elem set, nb feature
 print(attention_map_without_mask.size())
 # torch.Size([1, 1, 4, 4])  batch size, nb head, nb elem set, nb elem set
+```
 
-
+```python
 # Self attention with mask
 output_with_mask, attention_map_with_mask = module(observation, mask)
 print(output_with_mask.size())
 # torch.Size([1, 4, 3])  batch size, nb elem set, nb feature
 print(attention_map_wit_mask.size())
 # torch.Size([1, 1, 4, 4])  batch size, nb head, nb elem set, nb elem set
+```
 
+```python
 # Equality test
 torch.eq(output_without_mask, output_with_mask)
 # False
 ```
 
 {{< plotly json="/files/plotly/masking-rl/attention_without_mask.json" height="450px" >}}
-*Figure 7 :*
+*Figure 7 : Attention card without mask*
 
 
 {{< plotly json="/files/plotly/masking-rl/attention_with_mask.json" height="450px" >}}
-*Figure 8 :*
+*Figure 8 : Attention card with mask*
 
 
 ----
@@ -487,7 +490,9 @@ print(action_grid_map)
 #           [ 0.1350,  0.5542]]]])
 print(action_grid_map.size())
 # torch.Size([1, 3, 2, 2]) batch, nb action, height, width
+```
 
+```python
 agent_position = torch.tensor([[[True, False],
                                [False, True]]])
 
@@ -496,11 +501,14 @@ print(agent_position)
 #          [False,  True]]])
 print(agent_position.size())
 # torch.Size([1, 2, 2]) batch, height, width
+```
 
-
+```python
 mass_action_grid = CategoricalMap(logits=action_grid_map)
 mass_action_grid_masked = CategoricalMap(logits=action_grid_map, mask=agent_position)
+```
 
+```python
 sampled_grid = mass_action_grid.sample()
 print(sampled_grid)
 # tensor([[[0, 0],
@@ -510,7 +518,9 @@ sampled_grid_mask = mass_action_grid_masked.sample()
 print(sampled_grid_mask)
 # tensor([[[1, 1],
 #          [2, 1]]])
+```
 
+```python
 lp_masked = mass_action_grid_masked.log_prob(sampled_grid)
 print(lp_masked)
 # tensor([-1.5331]) batch
@@ -518,7 +528,9 @@ print(lp_masked)
 lp = mass_action_grid.log_prob(sampled_grid)
 print(lp)
 # tensor([-4.0220]) batch
+```
 
+```python
 entropy = mass_action_grid.entropy()
 print(entropy)
 # tensor([0.9776]) batch
