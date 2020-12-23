@@ -35,6 +35,8 @@ The scope of this blog post is to explain the concept of masking and to illustra
 
 # Action level
 
+**Concept**:
+
 {{< math.inline >}}
 <p>
 The primary function of a mask in deep reinforcement learning is to filter out impossible or unavailable actions.
@@ -91,6 +93,8 @@ Considering that we have set the value of logits associated with impossible acti
 </p>
 {{</ math.inline >}}
 
+
+**Implementation**:
 
 Now let's practice and implement action masking for a **discrete** action space and a policy-based algorithm.
 For this implementation I was inspired by Costa Huang paper [7].
