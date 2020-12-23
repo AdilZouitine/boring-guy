@@ -10,3 +10,17 @@ footnoteReturnLinkContents = "^"
 [author]
   name = "Adil Zouitine"
   #abstract = "Boring Guy"
+
+[markup]
+  [markup.highlight]
+    anchorLineNos = false
+    codeFences = true
+    guessSyntax = false
+    hl_Lines = ""
+    lineAnchors = ""
+    lineNoStart = 1
+    lineNos = false
+    lineNumbersInTable = false
+    noClasses = true
+    style = "solarized-light"
+    tabWidth = 4
