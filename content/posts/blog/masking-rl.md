@@ -348,11 +348,11 @@ print(attention_map_wit_mask.size())
 torch.eq(output_without_mask, output_with_mask)
 # False
 ```
-{{< load-plotly >}}
+
 {{< plotly json="/files/plotly/masking-rl/attention_without_mask.json" height="450px" >}}
 *Figure 7 :*
 
-{{< load-plotly >}}
+
 {{< plotly json="/files/plotly/masking-rl/attention_with_mask.json" height="450px" >}}
 *Figure 8 :*
 
