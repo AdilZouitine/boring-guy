@@ -3,128 +3,163 @@ title: "Masking in Deep Reinforcement Learning"
 date: 2020-10-31T16:20:06+01:00
 math: true
 ---
-# TODO
-1. Notation math attention
-2. Check `CategorialMap`
-3. Ecrire feignasse
 
-# Intro 
-durant stage à la fin de master en RL un question est venue comment gerer les actions imposible.
+# Introduction 
+{{< math.inline >}}
+<p>
+When I started deep reinforcement learning I was faced with an environment where certain actions are not available at every timestep \(t\).
+</p>
+{{</ math.inline >}}
+Naturally a question emerged: **"How can I manage impossible actions?"**.
 
-Ma première idée était de penaliser l'agent dans la fonction de recompense
-pas satisfait j'ai cherché d'autres méthode sur le net (lien stack) 
+The first solution I implemented is to assign a negative reward if the agent takes an impossible action.
+However, I was not satisfied with this method because it does not explicitly force the agent not to take an impossible action.
 
-cette façon est simple
-Façon élégante 
+Then I decided to use **action masking**.
+This method is simple to implement and elegant because it constrains the agent to take only "meaningful" actions. 
 
-Egalement papier il est possible pour les env partiellement observable de masquer au niveau des feature papier open ai
+Throughout in my practice of deep reinforcement learning I have learned that there are many ways to use masks.
+They can be used at any level in the neural network and for different tasks.
+Unfortunately there are few mask implementations for Reinforcement Learning available except for this great article by Costa Huang.
 
-----
-Lorsque j'ai commencé l'apprentissage par renforcement profond j'ai été confronté à un environnement où pour certains états il y avait des actions impossible parmi l'espace d'action.
-Naturellement un question s'est posé "Comment gérer les actions impossible ?"
-La première solution que j'ai implémenté était d'attribuer une récompense négative si l'agent prend une action impossible.
-Cependant je n'était pas satisfait de cette solution car elle elle ne contraint pas explicitement l'agent à ne pas prendre d'action impossible.
-
-J'ai donc décidé d'implémenter le masquage d'action.
-Cette méthode est simple à implémenter et élégante car elle contraint l'agent à ne prendre que des actions sensée.
+The scope of this blog post is to explain the concept of masking and to illustrate it through figures and code.
 
 
-Le masquage est utilisé dans de nombreux cas d'application de l'apprentissage par renforcement, tel qu'Alphastar ou Open Ai Five.
-Par exemple pour ceux jeux là l'espace d'action disponible à chaque pas de temps $$t$$ est titanesque.
-Pour Dota2 il est de 1,837,080 et pour Starcraft II de 10^26 cependant l'espace d'action possible pour chaque pas de temps $t$ est une petite fraction de l'espace d'action disponible. 
-L'avantage dans ces cas là est double.
-Le premiers est d'eviter de donner des actions invalide à l'environnement  et il va juste ignorer l'action.
-Le second est que le masquage est une méthodes simple qui aide à gerer les espaces d'action titanesque.
-
-Egalement dans l'article Hide and seek d'Open ai, les auteurs ont introduit le masquage au niveau de l'extraction de caractéristique pour faire une opération d'auto-attention sur les agents qui sont visible de son point de vue.
-
-Egalement pour optmiser la politique dans un controle de grille (lien papier article mehdi)
-
-
-Cependant peu d'implémentations existe, l´objectif de cet article est d´expliquer le principe du masquage et montrer qu'il peut intervenir à plusieurs niveaux du réseau.
 # Requirements
+- A notion of the [Maskovian Decision Processes](https://www.wikiwand.com/en/Markov_decision_process#:~:text=In%20mathematics%2C%20a%20Markov%20decision,control%20of%20a%20decision%20maker.) (MDP)
+- Notions of [Policy gradient](https://papers.nips.cc/paper/1999/file/464d828b85b0bed98e80ade0a5c43b0f-Paper.pdf) and [Q-Learning](https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf) algorithms
+- Some knowledge of [Pytorch](https://pytorch.org/) or the basics of [Numpy](https://numpy.org/)
 
-# Notation
-
-# **Table of contents**:
-
-1. Mask concept
-2. Action level
-3. Feature level
-4. Agent level
-5. Conclusion
-6. Going further
-7. References
 
 ----
-
-# Mask principe 
-Le principe de masque est simple, c'est une opération  qui permet d'ignorer certains éléments dans un ensemble pour le traitement suivant.
-`image mask`
-
-
-2. Exemple pandas 
 
 # Action level
 
+{{< math.inline >}}
+<p>
+The primary function of a mask in deep reinforcement learning is to filter out impossible or unavailable actions.
+For example Alphastar [1] and Open Ai Five [2] the total number of actions for each time step is \(10^{26}\) and \(1,837,080\).
+However, the possible action space for each time step is a small percentage of the available action space. 
+The advantage in these applications is double.
+The first one is to avoid giving invalid actions to the environment and it is a simple method that helps to manage the huge spaces of action by reducing them consequently. 
+
+</p>
+{{</ math.inline >}}
+
+
 {{< figure library="true" src="/img/masking-rl/action_masking.svg" lightbox="true" >}}
-*Figure 1 :*
+*Figure 1 : Visualisation of an action mask at the logit level*
 
+{{< math.inline >}}
+<p>
+The idea behind action masking is simple. It consists in replacing the logits associated to impossible actions at \(-\infty\).
+</p>
+{{</ math.inline >}}
+As we represent our values using `float32` we will take the lowest possible value that can be represented with 32 bits.
+In `Pytorch` we get this value with the following command:  `torch.finfo(torch.float.dtype).min` and the value is `-3.40e+38`.
+
+**The question now is why applying this mask prevents impossible actions being selected?**
+
+1. **Value-based algorithm (Q-Learning)** :
+
+{{< math.inline >}}
+<p>
+In the value-based approach, we select the highest estimated value of the action-value function \(Q(s, a)\).
+If we apply the action mask, the values associated with the impossible actions will be set to \(-\infty\) so they will never be the highest value and therefore they will never be selected. 
+</p>
+{{</ math.inline >}}
 $$
-\lim _{x \rightarrow-\infty} e^{x}=0
+a = \underset{a \in A}{\operatorname{argmax}} Q(s, . )
 $$
 
+2. **Policy Based algorithm (Policy gradient)** :
+In the policy-based approach the action is sampled according to the probability distribution at the output of the model.
+$$
+a \sim \pi_{\theta}(. \mid s)
+$$
+{{< math.inline >}}
+<p>
+It is therefore necessary to set the probability associated with the impossible action to 0.
+When we apply the mask, the logits associated with the impossible action are at \(-\infty\).
+To shift from the logits to the problability domain we use the softmax function.
+</p>
+{{</ math.inline >}}
 $$
 Softmax(\vec{z})\_{i} =\frac{e^{z_{i}}}{\sum_{j=1}^{K} e^{z_{j}}} \text { for } i=1, \ldots, K \text { and } \mathbf{z}=\left(z_{1}, \ldots, z_{K}\right) \in \mathbb{R}^{K}
 $$
+{{< math.inline >}}
+<p>
+Considering that we have set the value of logits associated with impossible actions to \(-\infty\), the probability of sampling these actions is equal to 0 because \(\lim _{x \rightarrow-\infty} e^{x}=0\).
+</p>
+{{</ math.inline >}}
 
-$$
-\underset{a \in A}{\operatorname{argmax}} Q(s_{t}, . )
-$$
 
+Now let's practice and implement action masking for a **discrete** action space and a policy-based algorithm.
+For this implementation I was inspired by Costa Huang paper [7].
 ```python
 from typing import Optional
 
 import torch
 from torch.distributions.categorical import Categorical
+from torch import einsum
+from einops import  reduce
 
 
 class CategoricalMasked(Categorical):
     def __init__(self, logits: torch.Tensor, mask: Optional[torch.Tensor] = None):
         self.mask = mask
+        self.batch, self.nb_action = logits.size()
         if mask is None:
             super(CategoricalMasked, self).__init__(logits=logits)
         else:
-            self.mask_value = torch.finfo(logits.dtype).max
-            logits.masked_fill_(~self.mask, -self.mask_value)
+            self.mask_value = torch.finfo(logits.dtype).min
+            logits.masked_fill_(~self.mask, self.mask_value)
             super(CategoricalMasked, self).__init__(logits=logits)
 
+    def entropy(self):
+        if self.mask is None:
+            return super().entropy()
+        # Elementwise multiplication
+        p_log_p = einsum("ij,ij->ij", self.logits, self.probs)
+        p_log_p = torch.where(
+            self.mask,
+            p_log_p,
+            torch.tensor(0, dtype=p_log_p.dtype, device=p_log_p.device),
+        )
+        return -reduce(p_log_p, "b a -> b", "sum", b=self.batch, a=self.nb_action)
 ```
 
 ```python
 logits_or_qvalues = torch.randn((2, 3))
 print(logits_or_qvalues)
-# tensor([[ 0.6128, -0.3682,  1.0550],
-#         [ 2.3505, -0.0106, -1.2979]])
+# tensor([[-1.8222,  1.0769, -0.6567],
+#         [-0.6729,  0.1665, -1.7856]])
 
 mask = torch.zeros((2, 3), dtype=torch.bool)
 mask[0][2] = True
 mask[1][0] = True
 mask[1][1] = True
 print(mask)
-
 # tensor([[False, False,  True],
 #         [ True,  True, False]])
+
 head = CategoricalMasked(logits=logits_or_qvalues)
 print(head.probs)
-# tensor([[0.3412, 0.1279, 0.5309],
-#         [0.8926, 0.0842, 0.0232]])
+# tensor([[0.0447, 0.8119, 0.1434],
+#         [0.2745, 0.6353, 0.0902]])
+
 head_masked = CategoricalMasked(logits=logits_or_qvalues, mask=mask)
 print(head_masked.probs)
 # tensor([[0.0000, 0.0000, 1.0000],
-#         [0.9138, 0.0862, 0.0000]])
-```
+#         [0.3017, 0.6983, 0.0000]])
 
+print(head.entropy())
+# tensor([0.5867, 0.8601])
+
+print(head_masked.entropy())
+# tensor([-0.0000, 0.6123])
+```
+----
 
 # Feature level 
 {{< figure library="true" src="/img/masking-rl/grid_rl_no_tree.png" lightbox="true" >}}
@@ -157,9 +192,6 @@ print(mask.size())
 # torch.Size([1, 4]) # batch size, nb elem set
 ```
 
-Nous avons maintenant représenté les masques, nous pouvons donc plonger dans le trou du lapin.
-
-
 {{< figure library="true" src="/img/masking-rl/self-attention.svg" lightbox="true" >}}
 *Figure 6 :*
 
@@ -170,7 +202,7 @@ $$
 {{< figure library="true" src="/img/masking-rl/mha.svg" lightbox="true" >}}
 *Figure 7 :*
 
-----
+
 
 
 
@@ -184,8 +216,7 @@ $$
 
 ```python
 import torch
-from torch import nn, einsum
-import torch.nn.functional as F
+from torch import nn, einsumimport torch.nn.functional as F
 from einops import rearrange, reduce
 
 
@@ -262,6 +293,8 @@ torch.eq(output_without_mask, output_with_mask)
 
 {{< plotly json="/files/plotly/masking-rl/attention_with_mask.json" height="450px" >}}
 *Figure 9 :*
+
+----
 
 # Agent level
 
@@ -401,9 +434,15 @@ print(masked_entropy)
 
 ```
 
+----
+
 # Conclusion
 
+----
+
 # Going further
+
+----
 
 # References
 
