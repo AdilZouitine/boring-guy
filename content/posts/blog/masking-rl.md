@@ -55,13 +55,11 @@ The first one is to avoid giving invalid actions to the environment and it is a 
 The idea behind action masking is simple. It consists in replacing the logits associated to impossible actions at \(-\infty\).
 </p>
 {{</ math.inline >}}
-As we represent our values using `float32` we will take the lowest possible value that can be represented with 32 bits.
-In `Pytorch` we get this value with the following command:  `torch.finfo(torch.float.dtype).min` and the value is `-3.40e+38`.
+
 
 **The question now is why applying this mask prevents impossible actions being selected?**
 
 1. **Value-based algorithm (Q-Learning)** :
-
 {{< math.inline >}}
 <p>
 In the value-based approach, we select the highest estimated value of the action-value function \(Q(s, a)\).
@@ -96,6 +94,18 @@ Considering that we have set the value of logits associated with impossible acti
 
 Now let's practice and implement action masking for a **discrete** action space and a policy-based algorithm.
 For this implementation I was inspired by Costa Huang paper [7].
+
+I overloaded Pytorch's Categorical class and added an optional mask argument.
+{{< math.inline >}}
+<p>
+If the mask (boolean) is present I replace the logit values to be masked by to \(-\infty\).
+</p>
+{{</ math.inline >}}
+However, as we represent our logits values using `float32` we will take the lowest possible value that can be represented with 32 bits.
+In `Pytorch` we get this value with the following command:  `torch.finfo(torch.float.dtype).min` and the value is `-3.40e+38`.
+We compute the entropy of the available actions only.
+
+
 ```python
 from typing import Optional
 
@@ -121,6 +131,7 @@ class CategoricalMasked(Categorical):
             return super().entropy()
         # Elementwise multiplication
         p_log_p = einsum("ij,ij->ij", self.logits, self.probs)
+        # Compute the entropy with possible action only
         p_log_p = torch.where(
             self.mask,
             p_log_p,
@@ -128,30 +139,33 @@ class CategoricalMasked(Categorical):
         )
         return -reduce(p_log_p, "b a -> b", "sum", b=self.batch, a=self.nb_action)
 ```
-
+You will find an example code below.
+First we create dummy logits and also dummy masks with the same shape.
 ```python
-logits_or_qvalues = torch.randn((2, 3))
-print(logits_or_qvalues)
+logits_or_qvalues = torch.randn((2, 3)) # batch size, nb action
+print(logits_or_qvalues) 
 # tensor([[-1.8222,  1.0769, -0.6567],
 #         [-0.6729,  0.1665, -1.7856]])
 
-mask = torch.zeros((2, 3), dtype=torch.bool)
+mask = torch.zeros((2, 3), dtype=torch.bool) # batch size, nb action
 mask[0][2] = True
 mask[1][0] = True
 mask[1][1] = True
-print(mask)
+print(mask) # False -> mask action 
 # tensor([[False, False,  True],
 #         [ True,  True, False]])
-
+```
+We will compare in the following code block an action head with or without mask.
+```python 
 head = CategoricalMasked(logits=logits_or_qvalues)
-print(head.probs)
-# tensor([[0.0447, 0.8119, 0.1434],
-#         [0.2745, 0.6353, 0.0902]])
+print(head.probs) # Impossible action are not masked
+# tensor([[0.0447, 0.8119, 0.1434], There remain 3 actions available
+#         [0.2745, 0.6353, 0.0902]]) There remain 3 actions available
 
 head_masked = CategoricalMasked(logits=logits_or_qvalues, mask=mask)
-print(head_masked.probs)
-# tensor([[0.0000, 0.0000, 1.0000],
-#         [0.3017, 0.6983, 0.0000]])
+print(head_masked.probs) # Impossible action are  masked
+# tensor([[0.0000, 0.0000, 1.0000], There remain 1 actions available
+#         [0.3017, 0.6983, 0.0000]]) There remain 2 actions available
 
 print(head.entropy())
 # tensor([0.5867, 0.8601])
@@ -162,6 +176,9 @@ print(head_masked.entropy())
 ----
 
 # Feature level 
+
+
+
 {{< figure library="true" src="/img/masking-rl/grid_rl_no_tree.png" lightbox="true" >}}
 *Figure 2 :*
 
