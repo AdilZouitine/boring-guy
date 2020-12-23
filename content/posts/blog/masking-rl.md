@@ -188,13 +188,13 @@ If the agent does not have an object in his field of view, then this **object wi
 
 If this is still unclear to you don't worry, we will explain it step by step using figure and code. 
 
-Let's suppose a grid world where the agent is a panda and his objective is to eat the watermelon, and avoid the dragon and the scorpion.  
+Let's suppose a grid world where the agent is a panda :panda: and his objective is to eat the watermelon :watermelon: , and avoid the dragon :dragon: and the scorpion :scorpion: .  
 {{< figure library="true" src="/img/masking-rl/grid_rl_no_tree.png" lightbox="true" >}}
-*Figure 2 : Grid world with 4 objects: a panda, a watermelon, a scorpion and a dragon*
+*Figure 2 : Grid world with 4 objects: panda :panda:, watermelon :watermelon:, scorpion :scorpion: and dragon :dragon:*
 
 Each of the objects is represented by a vector of dimentsion 3.
 The first component of the vector corresponds to its position on the x-axis in the grid. The second component of the vector corresponds to its position on the y-axis in the grid.
-Finally, the last component of the vector corresponds to the type of object (0: panda, 1: watermelon, 2: scorpion, 3: dragon).
+Finally, the last component of the vector corresponds to the type of object (0: panda :panda:, 1: watermelon :watermelon:, 2: scorpion :scorpion:, 3: dragon :dragon:).
 
 
 We can represent this observation as a set as follow:
@@ -223,11 +223,11 @@ s_{t} = \\{
 \\}
 $$
 
-Let's take the point of view of pandas for this observation he has in his field of view all the elements of the scene.
+Let's take the point of view of panda :panda: for this observation he has in his field of view all the elements of the scene.
 Therefore we can compute the attention score two by two between all the objects in the scene.
 
 {{< figure library="true" src="/img/masking-rl/grid_4_elem_all.svg" lightbox="true" >}}
-*Figure 3 : Self attention computation graph when the panda sees all other objects*
+*Figure 3 : Self attention computation graph when the panda :panda: sees all other objects*
 
 Here a few lines of code to see how the observation is represented as a tensor.
 
@@ -242,22 +242,39 @@ print(observation.size())
 ```
 
 {{< figure library="true" src="/img/masking-rl/grid_rl.png" lightbox="true" >}}
-*Figure 4 :*
+*Figure 4 : Grid world with 4 objects: a panda, a watermelon, a scorpion and a dragon and three trees that hide the scorpion*
 
-The scene in *figure 5* is similar to *figure 2*, however 3 trees obstruct the vision of the pandas and he cannot see the scorpion now.
+The scene in *figure 5* is similar to *figure 2*, however 3 trees obstruct the vision of the panda and he cannot see the scorpion now.
+In this configuration the attention scores should be computed in the following way:
 
+The panda :panda:, watermelon :watermelon: and dragon :dragon: calculate the attention score between itself and the other objects **excepted** the scorpion :scorpion:.
+
+The scorpion :scorpion: computes attention scores between itself and all other objects.
 {{< figure library="true" src="/img/masking-rl/grid_4_elem_scorpion_nope.svg" lightbox="true" >}}
-*Figure 5 :*
+*Figure 5 : Self attention computation graph when the panda :panda: see all objects except the scorpion :scorpion:*
 
+A small piece of code to show how the mask is represented as a tensor:
 ```python
 # Mask
 mask = torch.ones((1, 4), dtype=torch.bool)
+# Scorpion is in third position
 mask[0][2] = False
 print(mask)
-# tensor([[ True,  True, False,  True]])
+# tensor([[ True,  True, False,  True]]) Panda, Watermelon, Scorpion, Dragon
 print(mask.size())
 # torch.Size([1, 4]) # batch size, nb elem set
 ```
+Now that we have our inputs for the multi-head attention layer, it's finally time to dive into the rabbit hole.
+Self-attention is the **pairwise interdependence** of all elements composing an input.
+
+It is not the scope of this post to explain what attention is and to explain in details each of these operations.
+If you want to know more I invite you to read the wonderful article of Lilian Weng [11].
+
+{{< figure library="true" src="/img/masking-rl/multi_head_attention.svg" lightbox="true" >}}
+*Figure 6 : On the left are the operations composing the self-attention, on the right are the operations composing the multi-headed attention layer.*
+
+Mathematically we can translate figure 6 into the equation below.
+
 $$
 \text { Attention }(Q, K, V, Mask)=\operatorname{softmax}\left(\frac{Mask(Q K^{T})}{\sqrt{d_{k}}}\right) V
 $$
@@ -270,14 +287,29 @@ $$
 \text { where head }{i} = \text { Attention }(Q W_{i}^{Q}, K W_{i}^{K}, V W_{i}^{V}, Mask)
 $$
 
-{{< figure library="true" src="/img/masking-rl/multi_head_attention.svg" lightbox="true" >}}
-*Figure 6 :*
 
 
+{{< math.inline >}}
+<p>
+The attention cards are the result of this block of operation: \(\operatorname{softmax}\left(\frac{\operatorname{Mask}\left(Q K^{T}\right)}{\sqrt{d_{k}}}\right) \).
+</p>
+{{</ math.inline >}}
+We are interested in these maps because they will allow us to observe the effects of masking.
+{{< math.inline >}}
+<p>
+The masking concept for auto attention is the same as for action masking in the case of policy-based algorithms.
+By masking the values to \(-\infty\) associated with illegal connections between the normalized scalar product and the softmax.
+Illegal connections are ignored.
+</p>
+{{</ math.inline >}}
+
+Below you will find the code of the multi-head attention layer which is strongly inspired from the implementation available in the Luci drains github [9].
 
 ```python
+from typing import Optional, Tuple
 import torch
-from torch import nn, einsumimport torch.nn.functional as F
+from torch import nn, einsum
+import torch.nn.functional as F
 from einops import rearrange, reduce
 
 
@@ -294,7 +326,7 @@ class MultiHeadAttention(nn.Module):
 
     def forward(
         self, x: torch.Tensor, mask: Optional[torch.Tensor] = None
-    ) -> torch.Tensor:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         h = self.heads
 
         # gets q = Q = Wq matmul x1, k = Wk mm x2, v = Wv mm x3
@@ -528,3 +560,5 @@ print(masked_entropy)
 [9] [Lucidrains github](https://github.com/lucidrains)
 
 [10] [Multi-agents Reinforcement Learning by Mehdi Zouitine](https://mehdi-zouitine.netlify.app/post/2020-07-13-marl/)
+
+[11] [Attention? Attention!](https://lilianweng.github.io/lil-log/2018/06/24/attention-attention.html)
