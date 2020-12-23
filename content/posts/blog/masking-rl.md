@@ -97,7 +97,7 @@ Considering that we have set the value of logits associated with impossible acti
 **Implementation**:
 
 Now let's practice and implement action masking for a **discrete** action space and a policy-based algorithm.
-For this implementation I was inspired by Costa Huang paper [7].
+For this implementation I was inspired by Costa Huang paper and his action masking code [7].
 
 I overloaded `Pytorch`'s `Categorical` class and added an optional mask argument.
 {{< math.inline >}}
@@ -352,8 +352,10 @@ torch.eq(output_without_mask, output_with_mask)
 {{< plotly json="/files/plotly/masking-rl/attention_without_mask.json" height="450px" >}}
 *Figure 7 :*
 
+{{< load-plotly >}}
 {{< plotly json="/files/plotly/masking-rl/attention_with_mask.json" height="450px" >}}
 *Figure 8 :*
+
 
 ----
 
