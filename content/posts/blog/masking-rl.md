@@ -399,6 +399,8 @@ The mask has removed illegal connections between the panda :panda:, the watermel
 {{< plotly json="/files/plotly/masking-rl/attention_with_mask.json" height="450px" >}}
 *Figure 8 : Attention card **with** mask*
 
+We have clearly seen in the two previous figures that the attention maps are different and therefore the outputs will be different.
+Let's make some sanitary checks.
 ```python
 # Equality test
 torch.eq(output_without_mask, output_with_mask)
@@ -407,7 +409,8 @@ torch.eq(output_without_mask, output_with_mask)
 torch.eq(attention_map_without_mask, attention_map_with_mask)
 # False
 ```
-Now we are comparing the outputs with and without masks. We can observe that the results are different.
+In this section we have seen an interesting use of masks in **feature extraction** level.
+The combination of the masks and the multi-head attention layer allowed to build a representation between different entities of a **partially observable** scene.
 
 
 ----
