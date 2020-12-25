@@ -355,6 +355,11 @@ class MultiHeadAttention(nn.Module):
         return self.to_out(out), attn
 
 ```
+One of the really cool things about attention is that you can observe the **pairwise interdependence** (attention score) between each element of the input set.
+In the next two figures we will compare the differences between the attention map with and without the mask.
+I invite you to move the mouse over the figures to get more details on each element of these attention maps.
+The second element returned from our `MultiHeadAttention` layer corresponds to this attention map.
+ 
 Instanciating our multi-head attention layer, we fixed the dim value at 3 because the elements of our set are described by a vector of dimension 3.
 We fix the number of heads at 1 for the example.
 Finally, the size of the heads will be fixed at 8.
@@ -372,7 +377,13 @@ print(output_without_mask.size())
 print(attention_map_without_mask.size())
 # torch.Size([1, 1, 4, 4])  batch size, nb head, nb elem set, nb elem set
 ```
-In figure 4 the panda :panda: sees all other objects except the scorpion :scorpion: , so we will provide as input the observation and the mask in order to exclude the scorpion :scorpion: for the panda :panda:, the watermelon :watermelon: and the dragon :dragon: in the attention computation.
+
+{{< plotly json="/files/plotly/masking-rl/attention_without_mask.json" height="450px" >}}
+*Figure 7 : Attention card **without** mask*
+If you hover the mouse over all the elements of the attention map all of them do not have an attention value equal to 0.
+This means there are no illegal connections for the computation of the output represention. 
+
+In figure 4 the panda :panda: sees all other objects except the scorpion :scorpion: , so we will provide as input the observation and the **mask** in order to exclude the scorpion :scorpion: for the panda :panda:, the watermelon :watermelon: and the dragon :dragon: in the attention computation.
 ```python
 # Self attention with mask
 output_with_mask, attention_map_with_mask = module(observation, mask)
@@ -381,7 +392,8 @@ print(output_with_mask.size())
 print(attention_map_with_mask.size())
 # torch.Size([1, 1, 4, 4])  batch size, nb head, nb elem set, nb elem set
 ```
-Now we are comparing the outputs with and without masks. We can observe that the results are different.
+{{< plotly json="/files/plotly/masking-rl/attention_with_mask.json" height="450px" >}}
+*Figure 8 : Attention card **with** mask*
 
 ```python
 # Equality test
@@ -391,16 +403,7 @@ torch.eq(output_without_mask, output_with_mask)
 torch.eq(attention_map_without_mask, attention_map_with_mask)
 # False
 ```
-One of the really cool things about attention is that you can observe the **pairwise interdependence** (attention score) between each element of the input set.
-In the next two figures we will compare the differences between the attention map with and without the mask.
- I invite you to move the mouse over the figures to get more details on each element of these attention maps.
-
-{{< plotly json="/files/plotly/masking-rl/attention_without_mask.json" height="450px" >}}
-*Figure 7 : Attention card **without** mask*
-
-
-{{< plotly json="/files/plotly/masking-rl/attention_with_mask.json" height="450px" >}}
-*Figure 8 : Attention card **with** mask*
+Now we are comparing the outputs with and without masks. We can observe that the results are different.
 
 
 ----
