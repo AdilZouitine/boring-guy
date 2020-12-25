@@ -380,6 +380,7 @@ print(attention_map_without_mask.size())
 
 {{< plotly json="/files/plotly/masking-rl/attention_without_mask.json" height="450px" >}}
 *Figure 7 : Attention card **without** mask*
+
 If you hover the mouse over all the elements of the attention map all of them do not have an attention value equal to 0.
 This means there are no illegal connections for the computation of the output represention. 
 
