@@ -393,11 +393,11 @@ print(output_with_mask.size())
 print(attention_map_with_mask.size())
 # torch.Size([1, 1, 4, 4])  batch size, nb head, nb elem set, nb elem set
 ```
+If you hover with your mouse over the column (key) associated to the scorpion you will observe that the attention score is null except for the scorpion itself (figure 5).
+The mask has removed illegal connections between the pandas, the watermelon and the dragon toward the scorpion.
+
 {{< plotly json="/files/plotly/masking-rl/attention_with_mask.json" height="450px" >}}
 *Figure 8 : Attention card **with** mask*
-
-If you hover with your mouse over the column (key) associated to the scorpion you will observe that the attention score is null except for the scorpion itself.
-The mask has removed illegal connections between the pandas, the watermelon and the dragon toward the scorpion.
 
 ```python
 # Equality test
