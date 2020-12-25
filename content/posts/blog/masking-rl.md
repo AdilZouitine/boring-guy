@@ -417,6 +417,13 @@ The combination of the masks and the multi-head attention layer allowed to build
 
 # Agent level
 
+The latest example of mask use that I want to show you is the one introduced in the article Grid-Wise Control for Multi-Agent Reinforcement Learning in Video Game AI [4].
+The abstract of the paper explains well the method of grid control :
+
+"By viewing the state information as a grid feature map, we employ a convolutional encoder-decoder as the policy network. This architecture naturally promotes agent
+communication because of the large receptive field provided by the stacked convolutional layers. Moreover, the spatially shared convolutional
+parameters enable fast parallel exploration that the experiences discovered by one agent can be immediately transferred to others"
+
 **Notation** : 
 $$
 \text { State grid: } s \in \mathbb{R}^{w \times h \times c_{s}}
