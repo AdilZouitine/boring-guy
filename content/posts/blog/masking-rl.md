@@ -417,6 +417,13 @@ The combination of the masks and the multi-head attention layer allowed to build
 
 # Agent level
 
+**Notation** : 
+$$
+\text { State grid: } s \in \mathbb{R}^{w \times h \times c_{s}}
+$$
+$$
+\text { Action map : } a \in \mathbb{R}^{w \times h \times c_{a}}
+$$
 $$
 \text{Joint action space : } U=U_{1} \times U_{2} \times \cdots \times U_{n_{t}} \text { with } 1,2, \cdots, n_{t} \text { is the set of agents.}
 $$
