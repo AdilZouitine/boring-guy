@@ -446,7 +446,7 @@ $$
 $$
 
 {{< figure library="true" src="/img/masking-rl/masking_grid.svg" lightbox="true" >}}
-*Figure 9 :*
+*Figure 9 : High level view of policy network*
 
 ```python
 from typing import Optional
