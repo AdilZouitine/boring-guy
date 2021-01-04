@@ -3,6 +3,7 @@ title: "Masking in Deep Reinforcement Learning"
 date: 2020-10-31T16:20:06+01:00
 math: true
 ---
+{{< load-plotly >}}
 
 # Introduction 
 {{< math.inline >}}
@@ -380,6 +381,7 @@ print(attention_map_without_mask.size())
 
 If you hover the mouse over all the elements of the attention map all of them do not have an attention value equal to 0.
 This means there are no illegal connections for the computation of the output represention. 
+{{< load-plotly >}}
 
 {{< plotly json="/files/plotly/masking-rl/attention_without_mask.json" height="450px" >}}
 *Figure 7 : Attention card **without** mask*
@@ -445,8 +447,24 @@ $$
 \text{Actor-Critic loss function : }\nabla_{\theta} J(\theta)=\mathbb{E}_{s, \mathbf{u}}\left[\nabla_{\theta} \log \pi_{\theta}(\mathbf{u} \mid s) A_{\pi}(s, \mathbf{u})\right]
 $$
 
+The output of the policy network is an action map which for each coordinate contains a probability distribution of actions, regardless of the presence or absence of an agent.
+
+The role of the **mask** will be to filter the grid to compute the joint entropy and log probabilities taking into account only where are the agents. 
+
 {{< figure library="true" src="/img/masking-rl/masking_grid.svg" lightbox="true" >}}
 *Figure 9 : High level view of policy network*
+
+The code below is inspired by the action mask presented in the first part of the post.
+Pytorch's `Categorical` takes as input a tensor of two dimensions (batch, number of action) but our input is four (batch, number of action, height, width) so we will have to reshape.
+
+Also it is necessary to overload the method `log_prob`  in order to compute the joint log probabilities of all agents. 
+{{< math.inline >}}
+<p>
+The parent method returns a log probability grid, then we put the log probabilities in the cells where there is no more agent at 0. Then we compute the log probability joined using the following log propertie : \(\log (\prod_{i=1}^{n_{t}} \pi(u_{t}^{i} \mid s_{t})) = \sum_{i=1}^{n_{t}} \log (\pi(u_{t}^{i} \mid s_{t}))\)
+</p>
+{{</ math.inline >}}
+
+Finally, for the entropy computation we will simply average the entropy of each probability distribution of the agents present on the grid.
 
 ```python
 from typing import Optional
@@ -512,7 +530,7 @@ class CategoricalMap(Categorical):
 
         return entropy / self.nb_agent
 ```
-
+Let's take a simple example, our super-unbelievable auto-encoder has given us a grid of **2x2** size logits with **3** different actions.
 ```python
 action_grid_map = torch.randn(1,3, 2, 2)
 print(action_grid_map)
@@ -527,7 +545,7 @@ print(action_grid_map)
 print(action_grid_map.size())
 # torch.Size([1, 3, 2, 2]) batch, nb action, height, width
 ```
-
+However, the agents are in positions **(0, 0)** and **(1, 1)**, so we need our boring mask.
 ```python
 agent_position = torch.tensor([[[True, False],
                                [False, True]]])
@@ -538,12 +556,12 @@ print(agent_position)
 print(agent_position.size())
 # torch.Size([1, 2, 2]) batch, height, width
 ```
-
+Let's instantiate a CategoricalMap **without** (boring) mask and **with** (super-unbelievable).
 ```python
 mass_action_grid = CategoricalMap(logits=action_grid_map)
 mass_action_grid_masked = CategoricalMap(logits=action_grid_map, mask=agent_position)
 ```
-
+We sample the actions, as you can see that the mask has no influence in this stage.
 ```python
 sampled_grid = mass_action_grid.sample()
 print(sampled_grid)
@@ -557,13 +575,13 @@ print(sampled_grid_mask)
 ```
 
 ```python
-lp_masked = mass_action_grid_masked.log_prob(sampled_grid)
-print(lp_masked)
-# tensor([-1.5331]) batch
-
 lp = mass_action_grid.log_prob(sampled_grid)
 print(lp)
 # tensor([-4.0220]) batch
+
+lp_masked = mass_action_grid_masked.log_prob(sampled_grid)
+print(lp_masked)
+# tensor([-1.5331]) batch
 ```
 
 ```python
