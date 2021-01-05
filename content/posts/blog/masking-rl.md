@@ -304,6 +304,8 @@ Illegal connections are ignored.
 </p>
 {{</ math.inline >}}
 
+**Implementation**:
+
 Below you will find the code of the multi-head attention layer which is strongly inspired from the implementation available in the Luci drains github [9].
 
 ```python
@@ -447,12 +449,16 @@ $$
 \text{Actor-Critic loss function : }\nabla_{\theta} J(\theta)=\mathbb{E}_{s, \mathbf{u}}\left[\nabla_{\theta} \log \pi_{\theta}(\mathbf{u} \mid s) A_{\pi}(s, \mathbf{u})\right]
 $$
 
+
+
 The output of the policy network is an action map which for each coordinate contains a probability distribution of actions, regardless of the presence or absence of an agent.
 
 The role of the **mask** will be to filter the grid to compute the joint entropy and log probabilities taking into account only where are the agents. 
 
 {{< figure library="true" src="/img/masking-rl/masking_grid.svg" lightbox="true" >}}
 *Figure 9 : High level view of policy network*
+
+**Implementation**:
 
 The code below is inspired by the action mask presented in the first part of the post.
 Pytorch's `Categorical` takes as input a tensor of two dimensions (batch, number of action) but our input is four (batch, number of action, height, width) so we will have to reshape.
@@ -573,7 +579,8 @@ print(sampled_grid_mask)
 # tensor([[[1, 1],
 #          [2, 1]]])
 ```
-
+If we return the associated log probabilities of the same action map for the `Categoricalmap` with or without mask.
+You can see that the result is different, because without masking the log probabilities come from the joint probability of all the elements in the action map.
 ```python
 lp = mass_action_grid.log_prob(sampled_grid)
 print(lp)
@@ -583,7 +590,7 @@ lp_masked = mass_action_grid_masked.log_prob(sampled_grid)
 print(lp_masked)
 # tensor([-1.5331]) batch
 ```
-
+Finally in the same way the entropy is different with or without mask.
 ```python
 entropy = mass_action_grid.entropy()
 print(entropy)
@@ -594,10 +601,21 @@ print(masked_entropy)
 # tensor([1.0256]) batch
 
 ```
+In this section we have shown how we can use masks in multi-agent reinforcement learning in a grid world. 
+It is also possible to combine this mask with the action mask in order to manage impossible actions in addition to having a computation of log-probility and entropy by taking into account only the probability distributions of the agents located in the grid.
 
 ----
 
 # Conclusion
+
+The intention of this article is to show you different uses of masks in reinforcement learning.
+When we are faced to more complex environments than toy environments (cartpole, Atari etc ...).
+Masks are one of the many methods to simplify our lives.
+
+We have seen through three examples that we can use masks at several levels of the neural network or learning process.
+Obviously there are many different ways of using a mask and I would be very curious if you use different methods that I have presented to you.
+
+If you have any questions please do not hesitate to contact me by email or twitter.
 
 ----
 
