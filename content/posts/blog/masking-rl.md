@@ -9,22 +9,18 @@ math: true
 # Introduction 
 {{< math.inline >}}
 <p>
-When I started deep reinforcement learning I was faced with an environment where certain actions are not available at every timestep \(t\).
+When I started deep reinforcement learning, I worked on an environment where specific actions are not available at every timestep \(t\).
 </p>
 {{</ math.inline >}}
-Naturally a question emerged: **"How can I manage impossible actions?"**.
+Naturally, a question emerged: **"How can I manage impossible actions?"**.
 
-The first solution I implemented is to assign a negative reward if the agent takes an impossible action.
-However, I was not satisfied with this method because it does not explicitly force the agent not to take an impossible action.
+The first solution I implemented is to assign a negative reward if the agent takes an impossible action. However, I was not satisfied with this method because it does not explicitly force the agent not to take an impossible action.
 
-Then I decided to use **action masking**.
-This method is simple to implement and elegant because it constrains the agent to take only "meaningful" actions. 
+Then I decided to use **action masking**. This method is simple to implement and elegant because it constrains the agent to take only "meaningful" actions.
 
-Throughout in my practice of deep reinforcement learning I have learned that there are many ways to use masks.
-They can be used at any level in the neural network and for different tasks.
-Unfortunately there are few mask implementations for Reinforcement Learning available except for this great article by Costa Huang.
+Throughout my deep reinforcement learning practice, I have learned that there are many ways to use masks. Masks can be used at any level in the neural network and for different tasks. Unfortunately, few mask implementations for Reinforcement Learning are available except for this great article by Costa Huang.
 
-The scope of this blog post is to explain the concept of masking and to illustrate it through figures and code.
+This blog post's scope is to explain the concept of masking and illustrate it through figures and code.
 
 
 # Requirements
@@ -43,10 +39,9 @@ The scope of this blog post is to explain the concept of masking and to illustra
 <p>
 The primary function of a mask in deep reinforcement learning is to filter out impossible or unavailable actions.
 For example Alphastar [1] and Open Ai Five [2] the total number of actions for each time step is \(10^{26}\) and \(1,837,080\).
-However, the possible action space for each time step is a small percentage of the available action space. 
-The advantage in these applications is double.
-The first one is to avoid giving invalid actions to the environment and it is a simple method that helps to manage the huge spaces of action by reducing them consequently. 
-
+However, each time step's possible action space is a small percentage of the available action space. 
+The advantage of these applications is double.
+The first one is to avoid giving invalid actions to the environment, and it is a simple method that helps to manage the vast spaces of action by reducing them. 
 </p>
 {{</ math.inline >}}
 
@@ -56,38 +51,46 @@ The first one is to avoid giving invalid actions to the environment and it is a 
 
 {{< math.inline >}}
 <p>
-The idea behind action masking is simple. It consists in replacing the logits associated to impossible actions at \(-\infty\).
+Figure 1 illustrates the principle of action masking.
+The idea behind it is simple. It consists of replacing the logits associated with impossible actions at \(-\infty\).
 </p>
 {{</ math.inline >}}
 
 
-**The question now is why applying this mask prevents impossible actions being selected?**
+**The question now is, why applying this mask to preventing impossible actions from being selected?**
 
 1. **Value-based algorithm (Q-Learning)** :
 {{< math.inline >}}
 <p>
-In the value-based approach, we select the highest estimated value of the action-value function \(Q(s, a)\).
-If we apply the action mask, the values associated with the impossible actions will be set to \(-\infty\) so they will never be the highest value and therefore they will never be selected. 
+We select the highest estimated value of the action-value function \(Q(s, a)\) in the value-based approach: 
+
 </p>
 {{</ math.inline >}}
 $$
-a = \underset{a \in A}{\operatorname{argmax}} Q(s, . )
-$$
-
-2. **Policy Based algorithm (Policy gradient)** :
-In the policy-based approach the action is sampled according to the probability distribution at the output of the model.
-$$
-a \sim \pi_{\theta}(. \mid s)
+a = \underset{a \in A}{\operatorname{argmax}} Q(s, . ) \text{.}
 $$
 {{< math.inline >}}
 <p>
-It is therefore necessary to set the probability associated with the impossible action to 0.
-When we apply the mask, the logits associated with the impossible action are at \(-\infty\).
-To shift from the logits to the problability domain we use the softmax function.
+If we apply the action mask, the logits associated with impossible actions will be equal to \(-\infty\), so they will never be the highest value and, therefore, will never be selected. 
+</p>
+{{</ math.inline >}}
+
+
+2. **Policy Based algorithm (Policy gradient)** :
+
+We sample the action according to the probability distribution at the model's output in the policy-based approach:
+$$
+a \sim \pi_{\theta}(. \mid s) \text{.}
+$$
+{{< math.inline >}}
+<p>
+It is, therefore, necessary to set the probability associated with the impossible action to 0.
+When we apply the mask, the logits associated with the impossible action are at\(-\infty\).
+To shift from the logits to the probability domain, we use the Softmax function: 
 </p>
 {{</ math.inline >}}
 $$
-Softmax(\vec{z})\_{i} =\frac{e^{z_{i}}}{\sum_{j=1}^{K} e^{z_{j}}} \text { for } i=1, \ldots, K \text { and } \mathbf{z}=\left(z_{1}, \ldots, z_{K}\right) \in \mathbb{R}^{K}
+Softmax(\vec{z})\_{i} =\frac{e^{z_{i}}}{\sum_{j=1}^{K} e^{z_{j}}} \text { for } i=1, \ldots, K \text { and } \mathbf{z}=\left(z_{1}, \ldots, z_{K}\right) \in \mathbb{R}^{K} \text{.}
 $$
 {{< math.inline >}}
 <p>
@@ -98,18 +101,19 @@ Considering that we have set the value of logits associated with impossible acti
 
 **Implementation**:
 
-Now let's practice and implement action masking for a **discrete** action space and a policy-based algorithm.
-For this implementation I was inspired by Costa Huang paper and his action masking code [7].
-
-I overloaded `Pytorch`'s `Categorical` class and added an optional mask argument.
+Now let's practice and implement action masking for a discrete action space and a policy-based algorithm.
+I used the paper and the action masking code [7] from Costa Huang as a foundation.
+The idea is simple; we overload the `Pytorch`'s `Categorical` class and add an optional mask argument.
 {{< math.inline >}}
 <p>
-If the mask (boolean) is present I replace the logit values to be masked by to \(-\infty\).
+If the mask (boolean) is present, we replace the logit values masked by \(-\infty\).
 </p>
 {{</ math.inline >}}
-However, as we represent our logits values using `float32` we will take the lowest possible value that can be represented with 32 bits.
+However, we represent the logits using `float32`, so we have to replace the logits associated with the impossible actions with the minimum value represented in 32 bits.
 In `Pytorch` we get this value with the following command:  `torch.finfo(torch.float.dtype).min` and the value is `-3.40e+38`.
-We compute the entropy of the available actions only.
+
+Finally, in policy-based approaches for some algorithms such as PPO, it is necessary to compute the probability distribution entropy at the output of the model.
+In our case, we will compute the entropy only of the available actions. 
 
 
 ```python
@@ -145,8 +149,8 @@ class CategoricalMasked(Categorical):
         )
         return -reduce(p_log_p, "b a -> b", "sum", b=self.batch, a=self.nb_action)
 ```
-You will find an example code below.
-First we create dummy logits and also dummy masks with the same shape.
+The idea is to show you in the following code blocks how to use the action mask. 
+First, we create dummy logits and also dummy masks with the same shape.
 ```python
 logits_or_qvalues = torch.randn((2, 3)) # batch size, nb action
 print(logits_or_qvalues) 
@@ -179,16 +183,26 @@ print(head.entropy())
 print(head_masked.entropy())
 # tensor([-0.0000, 0.6123])
 ```
+{{< math.inline >}}
+<p>
+We can observe that when we apply the mask, the probabilities associated with impossible actions are equal to \(0\). Therefore, our agent will never select impossible actions.
+</p>
+{{</ math.inline >}}
+
+Finally, when we don't include the impossible actions in the entropy computation, we have consistent values. This corrected entropy computation allows an agent to maximize his exploration only on valid actions. 
+
+What a cool trick!
+
 ----
 
 # Feature level 
 
-Open ai introduced masking at the feature extraction level in the paper Hide and seek [8].
-Each object in the scene is embedded and passed into a masked attention block similar to the one proposed in the paper Attention is all you need [5].
-Except that the attention is not computed over time but **between the objects** in the scene.
-If the agent does not have an object in his field of view, then this **object will be masked** during the attention computation.
+Open ai introduced masking at the feature extraction level in the paper Hide and seek [8].Each object in the scene is embedded and passed into a masked attention block similar to the one proposed in the paper.Attention is all you need [5] except that the attention is not computed over time but between the **scene's objects**.
+The object will be **masked** during the attention computation if it is not in the agent's field of view. 
 
-If this is still unclear to you don't worry, we will explain it step by step using figure and code. 
+If this is still unclear to you, don't worry, we will explain it step by step using figure and code.
+
+**Example**:
 
 Let's suppose a grid world where the agent is a panda :panda: and his objective is to eat the watermelon :watermelon: , and avoid the dragon :dragon: and the scorpion :scorpion: .  
 {{< figure library="true" src="/img/masking-rl/grid_rl_no_tree.png" lightbox="true" >}}
