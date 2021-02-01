@@ -387,6 +387,7 @@ f you hover the mouse over all the attention map elements, all of them have an a
 {{< load-plotly >}}
 
 {{< plotly json="/files/plotly/masking-rl/attention_without_mask.json" height="450px" >}}
+
 *Figure 7 : Attention card **without** mask*
 
 Figure 4 shows the panda sees all other objects except the scorpion. We will provide the observation and the **mask** to exclude the panda :panda:, the scorpion :scorpion:, the watermelon :watermelon:, and the dragon :dragon: in the attention computation.
@@ -401,6 +402,7 @@ print(attention_map_with_mask.size())
 Suppose you hover with your mouse over the column (key) associated with the scorpion. In that case, you will observe that the attention score is null except for itself (figure 5). The mask has removed illegal connections between the panda :panda:, the watermelon :watermelon:, and the dragon :dragon: toward the scorpion :scorpion:.
 
 {{< plotly json="/files/plotly/masking-rl/attention_with_mask.json" height="450px" >}}
+
 *Figure 8 : Attention card **with** mask*
 
 We have seen in the two previous figures that the attention maps are different. Therefore, the outputs will be different. Let us make some sanitary checks.
