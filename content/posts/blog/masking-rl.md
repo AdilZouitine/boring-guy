@@ -197,20 +197,18 @@ What a cool trick!
 
 # Feature level 
 
-Open ai introduced masking at the feature extraction level in the paper Hide and seek [8].Each object in the scene is embedded and passed into a masked attention block similar to the one proposed in the paper.Attention is all you need [5] except that the attention is not computed over time but between the **scene's objects**.
-The object will be **masked** during the attention computation if it is not in the agent's field of view. 
+Open ai introduced masking at the feature extraction level in the paper Hide and seek [8]. Each object in the scene is embedded and passed into a masked attention block. Similar to the one proposed in the paper, "Attention is all you need" [5] except that the attention is not computed over time but between the **scene's objects**. The object will be **masked** during the attention computation if it is not in the agent's field of view.
 
 If this is still unclear to you, don't worry, we will explain it step by step using figure and code.
 
 **Example**:
 
-Let's suppose a grid world where the agent is a panda :panda: and his objective is to eat the watermelon :watermelon: , and avoid the dragon :dragon: and the scorpion :scorpion: .  
+Let us suppose a grid world where the agent is a panda :panda: . His objective is to eat the watermelon :watermelon: and avoid the dragon :dragon:  and the scorpion :scorpion:.
+
 {{< figure library="true" src="/img/masking-rl/grid_rl_no_tree.png" lightbox="true" >}}
 *Figure 2 : Grid world with 4 objects: panda :panda:, watermelon :watermelon:, scorpion :scorpion: and dragon :dragon:*
 
-Each of the objects is represented by a vector of dimentsion 3.
-The first component of the vector corresponds to its position on the x-axis in the grid. The second component of the vector corresponds to its position on the y-axis in the grid.
-Finally, the last component of the vector corresponds to the type of object (0: panda :panda:, 1: watermelon :watermelon:, 2: scorpion :scorpion:, 3: dragon :dragon:).
+A vector of dimension 3 represents each object. The first component of the vector corresponds to its position on the x-axis in the grid. The second corresponds to its position on the y-axis in the grid. Finally, the vector's last element corresponds to the type of object (0: panda :panda:, 1: watermelon :watermelon:, 2: scorpion :scorpion:, 3: dragon :dragon:).
 
 
 We can represent this observation as a set as follow:
@@ -239,13 +237,13 @@ s_{t} = \\{
 \\}
 $$
 
-Let's take the point of view of panda :panda: for this observation he has in his field of view all the elements of the scene.
-Therefore we can compute the attention score two by two between all the objects in the scene.
+
+Let us take the panda's point of view for this observation he has in his field of view all the elements of the scene. Therefore we can compute the attention score two by two between all the objects in the scene (Illustrated in *figure 5*).
 
 {{< figure library="true" src="/img/masking-rl/grid_4_elem_all.svg" lightbox="true" >}}
 *Figure 3 : Self attention computation graph when the panda :panda: sees all other objects*
 
-Here a few lines of code to see how the observation is represented as a tensor.
+Here, we will implement a tensor in a few lines representing the observation we have presented above.
 
 **Note**: Whatever the order of the objects, the self-attention operation is invariant to the permutation.
 ```python
@@ -260,16 +258,14 @@ print(observation.size())
 {{< figure library="true" src="/img/masking-rl/grid_rl.png" lightbox="true" >}}
 *Figure 4 : Grid world with 4 objects: a panda, a watermelon, a scorpion and a dragon and three trees that hide the scorpion*
 
-The scene in *figure 5* is similar to *figure 2*, however 3 trees obstruct the vision of the panda and he cannot see the scorpion now.
-In this configuration the attention scores should be computed in the following way:
+The scene in *figure 5* is similar to *figure 2*; however, 3 trees obstruct the panda's vision, and he cannot see the scorpion now.  In this configuration, attention computation follows :
+The panda :panda:, watermelon :watermelon:, and dragon :dragon: compute the attention score between themselves and the other objects **excepted** the scorpion :scorpion:.
+Whereas the scorpion :scorpion: computes attention scores between itself and all other objects.
 
-The panda :panda:, watermelon :watermelon: and dragon :dragon: calculate the attention score between itself and the other objects **excepted** the scorpion :scorpion:.
-
-The scorpion :scorpion: computes attention scores between itself and all other objects.
 {{< figure library="true" src="/img/masking-rl/grid_4_elem_scorpion_nope.svg" lightbox="true" >}}
 *Figure 5 : Self attention computation graph when the panda :panda: see all objects except the scorpion :scorpion:*
 
-A small piece of code to show how the mask is represented as a tensor:
+Here, we will implement a tensor representing the mask:
 ```python
 # Mask
 mask = torch.ones((1, 4), dtype=torch.bool)
@@ -280,11 +276,9 @@ print(mask)
 print(mask.size())
 # torch.Size([1, 4]) # batch size, nb elem set
 ```
-Now that we have our inputs for the multi-head attention layer, it's finally time to dive into the rabbit hole.
-Self-attention is the **pairwise interdependence** of all elements composing an input.
+Now that we have our inputs for the multi-head attention layer, it is finally time to dive into the rabbit hole. Self-attention is the **pairwise interdependence** of all elements composing an input.
 
-It is not the scope of this post to explain what attention is and to explain in details each of these operations.
-If you want to know more I invite you to read the wonderful article of Lilian Weng [11].
+It is not the scope of this post to explain what attention is and explain in detail each of these operations. If you want to know more, I invite you to read the excellent article of Lilian Weng [11].
 
 {{< figure library="true" src="/img/masking-rl/multi_head_attention.svg" lightbox="true" >}}
 *Figure 6 : On the left are the operations composing the self-attention, on the right are the operations composing the multi-headed attention layer.*
@@ -307,21 +301,19 @@ $$
 
 {{< math.inline >}}
 <p>
-The attention cards are the result of this block of operation: \(\operatorname{softmax}\left(\frac{\operatorname{Mask}\left(Q K^{T}\right)}{\sqrt{d_{k}}}\right) \).
+The attention cards result from this block of operation: \(\operatorname{softmax}\left(\frac{\operatorname{Mask}\left(Q K^{T}\right)}{\sqrt{d_{k}}}\right) \).
 </p>
 {{</ math.inline >}}
 We are interested in these maps because they will allow us to observe the effects of masking.
 {{< math.inline >}}
 <p>
-The masking concept for auto attention is the same as for action masking in the case of policy-based algorithms.
-By masking the values to \(-\infty\) associated with illegal connections between the normalized scalar product and the softmax.
-Illegal connections are ignored.
+The masking concept for auto attention is the same as for action masking in the case of policy-based algorithms, by masking the values to \(-\infty\) associated with illegal connections between the normalized scalar product and the softmax.
 </p>
 {{</ math.inline >}}
 
 **Implementation**:
 
-Below you will find the code of the multi-head attention layer which is strongly inspired from the implementation available in the Luci drains github [9].
+Below you will find the multi-head attention layer code, which is strongly inspired by the Luci drains GitHub [9].
 
 ```python
 from typing import Optional, Tuple
@@ -373,19 +365,14 @@ class MultiHeadAttention(nn.Module):
         return self.to_out(out), attn
 
 ```
-One of the really cool things about attention is that you can observe the **pairwise interdependence** (attention score) between each element of the input set.
-In the next two figures we will compare the differences between the attention map with and without the mask.
-I invite you to move the mouse over the figures to get more details on each element of these attention maps.
-The second element returned from our `MultiHeadAttention` layer corresponds to this attention map.
- 
-Instanciating our multi-head attention layer, we fixed the dim value at 3 because the elements of our set are described by a vector of dimension 3.
-We fix the number of heads at 1 for the example.
-Finally, the size of the heads will be fixed at 8.
+
+One of the really cool things about attention is that you can observe the **pairwise interdependence** (attention score) between each input set element. We will compare the attention map's differences with and without the mask in the next two figures. I invite you to move the mouse over the figures to get more details on each element of these attention maps. The second element returned from our `MultiHeadAttention` layer corresponds to this attention map.
+Instantiating our multi-head attention layer, we fixed the dim value at 3 because a vector of dimension 3 describes our set elements. We fix the number of heads at 1 for the example. Finally, the size of the heads is fixed at 8.
 
 ```python
 module = MultiHeadAttention(dim=3, heads = 1,  dim_head = 8)
 ```
-In figure 2 the panda :panda: sees all the other objects, it is not necessary to have a mask at the input of the attention layer.
+In figure 2, the panda :panda: sees all the other objects; it is unnecessary to have a mask at the attention layer's input.
 
 ```python
 # Self attention without mask
@@ -396,14 +383,13 @@ print(attention_map_without_mask.size())
 # torch.Size([1, 1, 4, 4])  batch size, nb head, nb elem set, nb elem set
 ```
 
-If you hover the mouse over all the elements of the attention map all of them do not have an attention value equal to 0.
-This means there are no illegal connections for the computation of the output represention. 
+f you hover the mouse over all the attention map elements, all of them have an attention value different than 0. This means there are no illegal connections for the output representation's computation. 
 {{< load-plotly >}}
 
 {{< plotly json="/files/plotly/masking-rl/attention_without_mask.json" height="450px" >}}
 *Figure 7 : Attention card **without** mask*
 
-In figure 4 the panda :panda: sees all other objects except the scorpion :scorpion: , so we will provide as input the observation and the **mask** in order to exclude the scorpion :scorpion: for the panda :panda:, the watermelon :watermelon: and the dragon :dragon: in the attention computation.
+Figure 4 shows the panda sees all other objects except the scorpion. We will provide the observation and the **mask** to exclude the panda :panda:, the scorpion :scorpion:, the watermelon :watermelon:, and the dragon :dragon: in the attention computation.
 ```python
 # Self attention with mask
 output_with_mask, attention_map_with_mask = module(observation, mask)
@@ -412,14 +398,12 @@ print(output_with_mask.size())
 print(attention_map_with_mask.size())
 # torch.Size([1, 1, 4, 4])  batch size, nb head, nb elem set, nb elem set
 ```
-If you hover with your mouse over the column (key) associated to the scorpion :scorpion: you will observe that the attention score is null except for itself (figure 5).
-The mask has removed illegal connections between the panda :panda:, the watermelon :watermelon: and the dragon :dragon: toward the scorpion :scorpion:.
+Suppose you hover with your mouse over the column (key) associated with the scorpion. In that case, you will observe that the attention score is null except for itself (figure 5). The mask has removed illegal connections between the panda :panda:, the watermelon :watermelon:, and the dragon :dragon: toward the scorpion :scorpion:.
 
 {{< plotly json="/files/plotly/masking-rl/attention_with_mask.json" height="450px" >}}
 *Figure 8 : Attention card **with** mask*
 
-We have clearly seen in the two previous figures that the attention maps are different and therefore the outputs will be different.
-Let's make some sanitary checks.
+We have seen in the two previous figures that the attention maps are different. Therefore, the outputs will be different. Let us make some sanitary checks.
 ```python
 # Equality test
 torch.eq(output_without_mask, output_with_mask)
@@ -428,7 +412,8 @@ torch.eq(output_without_mask, output_with_mask)
 torch.eq(attention_map_without_mask, attention_map_with_mask)
 # False
 ```
-In this section we have seen an interesting use of masks in **feature extraction** level.
+
+In this section, we have seen an exciting use of masks in the **feature extraction** level.
 The combination of the masks and the multi-head attention layer allowed to build a representation between different entities of a **partially observable** scene.
 
 
@@ -436,7 +421,8 @@ The combination of the masks and the multi-head attention layer allowed to build
 
 # Agent level
 
-The latest example of mask use that I want to show you is the one introduced in the article Grid-Wise Control for Multi-Agent Reinforcement Learning in Video Game AI [4].
+Finally, the masks' last application that I want to present you is to filter agents in a multi-agent configuration in a grid world.
+This method's implementation is in the following paper: "Grid-Wise Control for Multi-Agent Reinforcement Learning in Video Game AI" [4].
 
 The abstract of the paper explains well the method of grid control :
 
@@ -466,26 +452,25 @@ $$
 
 
 
-The output of the policy network is an action map which for each coordinate contains a probability distribution of actions, regardless of the presence or absence of an agent.
+The policy network output is an action map that for each coordinate contains a probability distribution of actions, regardless of the presence or absence of an agent.
 
-The role of the **mask** will be to filter the grid to compute the joint entropy and log probabilities taking into account only where are the agents. 
+The **mask**'s role will be to filter the grid to compute the joint entropy and log probabilities, taking into account only where the agents are. 
 
 {{< figure library="true" src="/img/masking-rl/masking_grid.svg" lightbox="true" >}}
 *Figure 9 : High level view of policy network*
 
 **Implementation**:
 
-The code below is inspired by the action mask presented in the first part of the post.
-Pytorch's `Categorical` takes as input a tensor of two dimensions (batch, number of action) but our input is four (batch, number of action, height, width) so we will have to reshape.
+The action masking code inspired us to implement the code below.  Pytorch's `Categorical` takes as input a tensor of two dimensions (batch, number of action). However, our input is four (batch, number of action, height, width), so we will have to reshape.
+Also, it is necessary to overload the method `log_prob` to compute all agents' joint log probabilities.
 
-Also it is necessary to overload the method `log_prob`  in order to compute the joint log probabilities of all agents. 
 {{< math.inline >}}
 <p>
-The parent method returns a log probability grid, then we put the log probabilities in the cells where there is no more agent at 0. Then we compute the log probability joined using the following log propertie : \(\log (\prod_{i=1}^{n_{t}} \pi(u_{t}^{i} \mid s_{t})) = \sum_{i=1}^{n_{t}} \log (\pi(u_{t}^{i} \mid s_{t}))\)
+The parent method returns a log probability grid. We put the log probabilities in the cells where there is no more agent at 0. Then we compute the log probability joined using the following log property: \(\log (\prod_{i=1}^{n_{t}} \pi(u_{t}^{i} \mid s_{t})) = \sum_{i=1}^{n_{t}} \log (\pi(u_{t}^{i} \mid s_{t}))\)
 </p>
 {{</ math.inline >}}
 
-Finally, for the entropy computation we will simply average the entropy of each probability distribution of the agents present on the grid.
+Finally, we will average the entropy of each probability distribution of the agents present on the grid for the entropy computation.
 
 ```python
 from typing import Optional
@@ -551,7 +536,7 @@ class CategoricalMap(Categorical):
 
         return entropy / self.nb_agent
 ```
-Let's take a simple example, our super-unbelievable auto-encoder has given us a grid of **2x2** size logits with **3** different actions.
+Let us take a simple example; our super-unbelievable auto-encoder has given us a grid of **2x2** size logits with **3** different actions.
 ```python
 action_grid_map = torch.randn(1,3, 2, 2)
 print(action_grid_map)
@@ -577,12 +562,12 @@ print(agent_position)
 print(agent_position.size())
 # torch.Size([1, 2, 2]) batch, height, width
 ```
-Let's instantiate a CategoricalMap **without** (boring) mask and **with** (super-unbelievable).
+Let us instantiate a CategoricalMap **without** (boring) mask and **with** (super-unbelievable).
 ```python
 mass_action_grid = CategoricalMap(logits=action_grid_map)
 mass_action_grid_masked = CategoricalMap(logits=action_grid_map, mask=agent_position)
 ```
-We sample the actions, as you can see that the mask has no influence in this stage.
+We sample the actions, as you can see that the mask does not influence this stage.
 ```python
 sampled_grid = mass_action_grid.sample()
 print(sampled_grid)
@@ -594,8 +579,7 @@ print(sampled_grid_mask)
 # tensor([[[1, 1],
 #          [2, 1]]])
 ```
-If we return the associated log probabilities of the same action map for the `Categoricalmap` with or without mask.
-You can see that the result is different, because without masking the log probabilities come from the joint probability of all the elements in the action map.
+Suppose we return the same action map's associated log probabilities for the `Categoricalmap` with or without the mask. In that case, you can see that the result is different because without masking, the log probabilities come from the joint probability of all the elements in the action map.
 ```python
 lp = mass_action_grid.log_prob(sampled_grid)
 print(lp)
@@ -605,7 +589,7 @@ lp_masked = mass_action_grid_masked.log_prob(sampled_grid)
 print(lp_masked)
 # tensor([-1.5331]) batch
 ```
-Finally in the same way the entropy is different with or without mask.
+Finally, in the same way, the entropy is different with or without the mask.
 ```python
 entropy = mass_action_grid.entropy()
 print(entropy)
@@ -616,21 +600,20 @@ print(masked_entropy)
 # tensor([1.0256]) batch
 
 ```
-In this section we have shown how we can use masks in multi-agent reinforcement learning in a grid world. 
-It is also possible to combine this mask with the action mask in order to manage impossible actions in addition to having a computation of log-probility and entropy by taking into account only the probability distributions of the agents located in the grid.
+This section has shown how we can use masks in multi-agent reinforcement learning in a grid world. 
+It is also possible to combine this mask with the action mask to manage impossible actions and have a computation of log-probability and entropy by taking into account only the probability distributions of the agents located in the grid.
 
 ----
 
 # Conclusion
 
-The intention of this article is to show you different uses of masks in reinforcement learning.
-When we are faced to more complex environments than toy environments (cartpole, Atari etc ...).
-Masks are one of the many methods to simplify our lives.
+This article intends to show you different uses of masks in reinforcement learning.
+When we face more complex environments than toy environments, masks are among the many methods to simplify our lives.
 
-We have seen through three examples that we can use masks at several levels of the neural network or learning process.
-Obviously there are many different ways of using a mask and I would be very curious if you use different methods that I have presented to you.
+We have seen three examples that we can use masks at several neural network or learning process levels.
+There are many different ways of using a mask. I will be curious if you use different methods that I have presented to you.
 
-If you have any questions please do not hesitate to contact me by email or twitter.
+If you have any questions, please do not hesitate to contact me by email or Twitter.
 
 ----
 
