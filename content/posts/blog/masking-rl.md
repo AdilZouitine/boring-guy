@@ -12,7 +12,11 @@ math: true
 When I started deep reinforcement learning, I worked on an environment where specific actions are not available at every timestep \(t\).
 </p>
 {{</ math.inline >}}
-Naturally, a question emerged: **"How can I manage impossible actions?"**.
+
+Let's illustrate the concept of impossible or unavailable action concretely:
+Suppose you want to develop an agent to play Mario kart video game. Now, suppose that the agent has an empty inventory (no banana :banana: or anything). Your agent can't execute the action "use the object in the inventory." Limiting the agent to a meaningful choice of action will allow it to explore more cleverly and provide a better policy.
+
+Now that you understand the concept of impossible or unavailable action, naturally, a question emerged: **"How can I manage impossible actions?"**.
 
 The first solution I implemented is to assign a negative reward if the agent takes an impossible action. However, I was not satisfied with this method because it does not explicitly force the agent not to take an impossible action.
 
@@ -21,7 +25,8 @@ Then I decided to use **action masking**. This method is simple to implement and
 Throughout my deep reinforcement learning practice, I have learned that there are many ways to use masks. Masks can be used at any level in the neural network and for different tasks. Unfortunately, few mask implementations for Reinforcement Learning are available except for this great article by Costa Huang.
 
 This blog post's scope is to explain the concept of masking and illustrate it through figures and code.
-
+Indeed the masks make it possible to model many constraints that we will see as we go along in this blog post, and the whole is entirely differentiable.
+**In short, masks are there to simplify your life.**
 
 # Requirements
 - A notion of the [Maskovian Decision Processes](https://www.wikiwand.com/en/Markov_decision_process#:~:text=In%20mathematics%2C%20a%20Markov%20decision,control%20of%20a%20decision%20maker.) (MDP)
@@ -38,7 +43,7 @@ This blog post's scope is to explain the concept of masking and illustrate it th
 {{< math.inline >}}
 <p>
 The primary function of a mask in deep reinforcement learning is to filter out impossible or unavailable actions.
-For example Alphastar [1] and Open Ai Five [2] the total number of actions for each time step is \(10^{26}\) and \(1,837,080\).
+For example Starcraft II [1] and Dota II [2] the total number of actions for each time step is \(10^{26}\) and \(1,837,080\).
 However, each time step's possible action space is a small percentage of the available action space. 
 The advantage of these applications is double.
 The first one is to avoid giving invalid actions to the environment, and it is a simple method that helps to manage the vast spaces of action by reducing them. 
@@ -112,7 +117,7 @@ If the mask (boolean) is present, we replace the logit values masked by \(-\inft
 However, we represent the logits using `float32`, so we have to replace the logits associated with the impossible actions with the minimum value represented in 32 bits.
 In `Pytorch` we get this value with the following command:  `torch.finfo(torch.float.dtype).min` and the value is `-3.40e+38`.
 
-Finally, in policy-based approaches for some algorithms such as PPO, it is necessary to compute the probability distribution entropy at the output of the model.
+Finally, in policy-based approaches for some algorithms such as Proximal Policy Optimization (PPO) [12], it is necessary to compute the probability distribution entropy at the output of the model.
 In our case, we will compute the entropy only of the available actions. 
 
 
@@ -646,3 +651,5 @@ If you have any questions, please do not hesitate to contact me by email or Twit
 [10] [Multi-agents Reinforcement Learning by Mehdi Zouitine](https://mehdi-zouitine.netlify.app/post/2020-07-13-marl/)
 
 [11] [Attention? Attention!](https://lilianweng.github.io/lil-log/2018/06/24/attention-attention.html)
+
+[12] [Proximal Policy Optimization Algorithms](https://arxiv.org/abs/1707.06347)
