@@ -9,30 +9,31 @@ math: true
 # Introduction 
 {{< math.inline >}}
 <p>
-When I started deep reinforcement learning, I worked on an environment where specific actions are not available at every timestep \(t\).
+I worked on an environment where specific actions are not available at every timestep \(t\) when I started deep reinforcement learning.
 </p>
 {{</ math.inline >}}
 
 Let's illustrate the concept of impossible or unavailable action concretely:
-Suppose you want to develop an agent to play Mario kart video game. Now, suppose that the agent has an empty inventory (no banana :banana: or anything). Your agent can't execute the action "use the object in the inventory." Limiting the agent to a meaningful choice of action will allow it to explore more cleverly and provide a better policy.
 
-Now that you understand the concept of impossible or unavailable action, naturally, a question emerged: **"How can I manage impossible actions?"**.
+Suppose you want to develop an agent to play the Mario Kart video game. Next, assume that the agent has an empty inventory (no banana :banana: or anything). The agent can't execute the action "use the object in the inventory". Limiting the agent to a meaningful choice of actions will allow it to explore more cleverly and provide a better policy.
 
-The first solution I implemented is to assign a negative reward if the agent takes an impossible action. However, I was not satisfied with this method because it does not explicitly force the agent not to take an impossible action.
+Now that you understand the concept of impossible or unavailable action, the natural question is: **"how can I manage impossible actions?"**.
 
-Then I decided to use **action masking**. This method is simple to implement and elegant because it constrains the agent to take only "meaningful" actions.
+The first solution I implemented was to assign a negative reward if the agent takes an impossible action. However, I was not satisfied with this method because it does not explicitly force the agent to not take an impossible action.
 
-Throughout my deep reinforcement learning practice, I have learned that there are many ways to use masks. Masks can be used at any level in the neural network and for different tasks. Unfortunately, few mask implementations for Reinforcement Learning are available except for this great article by Costa Huang.
+Then I decided to use **action masking**. This method is simple to implement and elegant because it constrains the agent to only take "meaningful" actions.
+
+I have learned that there are many ways to use masks throughout my deep reinforcement learning practice. Masks can be used at any level in the neural network and for different tasks. Unfortunately, few mask implementations for reinforcement learning are available except for this great article by Costa Huang.
 
 This blog post's scope is to explain the concept of masking and illustrate it through figures and code.
-Indeed the masks make it possible to model many constraints that we will see as we go along in this blog post, and the whole is entirely differentiable.
+Indeed, the masks make it possible to model many constraints that we will see as we go along in this blog post, and the whole process is entirely differentiable.
 **In short, masks are there to simplify your life.**
 
 # Requirements
-- A notion of the [Maskovian Decision Processes](https://www.wikiwand.com/en/Markov_decision_process#:~:text=In%20mathematics%2C%20a%20Markov%20decision,control%20of%20a%20decision%20maker.) (MDP)
-- Notions of [Policy gradient](https://papers.nips.cc/paper/1999/file/464d828b85b0bed98e80ade0a5c43b0f-Paper.pdf) and [Q-Learning](https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf) algorithms
-- Some knowledge of [Pytorch](https://pytorch.org/) or the basics of [Numpy](https://numpy.org/)
-- A notion of [Self-attention](https://arxiv.org/pdf/1706.03762.pdf), if you want to understand what this concept is, I invite you to read this great article explaining the [transformers](http://peterbloem.nl/blog/transformers) [6]. 
+- A notion of the [Markovian decision processes](https://www.wikiwand.com/en/Markov_decision_process#:~:text=In%20mathematics%2C%20a%20Markov%20decision,control%20of%20a%20decision%20maker.) (MDP)
+- Notions of [policy gradient](https://papers.nips.cc/paper/1999/file/464d828b85b0bed98e80ade0a5c43b0f-Paper.pdf) and [Q-Learning](https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf) algorithms
+- Some knowledge of [PyTorch](https://pytorch.org/) or the basics of [numpy](https://numpy.org/)
+- A notion of [self-attention](https://arxiv.org/pdf/1706.03762.pdf). If you want to understand what this concept is, I invite you to read this great article explaining [transformers](http://peterbloem.nl/blog/transformers) [6]. 
 
 ----
 
@@ -43,10 +44,10 @@ Indeed the masks make it possible to model many constraints that we will see as 
 {{< math.inline >}}
 <p>
 The primary function of a mask in deep reinforcement learning is to filter out impossible or unavailable actions.
-For example Starcraft II [1] and Dota II [2] the total number of actions for each time step is \(10^{26}\) and \(1,837,080\).
+For example, in Starcraft II [1] and Dota II [2] the total number of actions for each time step is \(10^{26}\) and \(1,837,080\).
 However, each time step's possible action space is a small percentage of the available action space. 
-The advantage of these applications is double.
-The first one is to avoid giving invalid actions to the environment, and it is a simple method that helps to manage the vast spaces of action by reducing them. 
+There are thus two advantages to using masking.
+The first one is to avoid giving invalid actions to the environment. The second is that it is a simple method that helps to manage the vast spaces of action by reducing them. 
 </p>
 {{</ math.inline >}}
 
@@ -81,7 +82,7 @@ If we apply the action mask, the logits associated with impossible actions will 
 {{</ math.inline >}}
 
 
-2. **Policy Based algorithm (Policy gradient)** :
+2. **Policy based algorithm (Policy gradient)** :
 
 We sample the action according to the probability distribution at the model's output in the policy-based approach:
 $$
@@ -89,9 +90,9 @@ a \sim \pi_{\theta}(. \mid s) \text{.}
 $$
 {{< math.inline >}}
 <p>
-It is, therefore, necessary to set the probability associated with the impossible action to 0.
-When we apply the mask, the logits associated with the impossible action are at\(-\infty\).
-To shift from the logits to the probability domain, we use the Softmax function: 
+Therefore, it is necessary to set the probability associated with the impossible action to 0.
+The logits associated with the impossible action are at\(-\infty\) when we apply the mask.
+We use the softmax function to shift from the logits to the probability domain: 
 </p>
 {{</ math.inline >}}
 $$
@@ -108,14 +109,14 @@ Considering that we have set the value of logits associated with impossible acti
 
 Now let's practice and implement action masking for a discrete action space and a policy-based algorithm.
 I used the paper and the action masking code [7] from Costa Huang as a foundation.
-The idea is simple; we overload the `Pytorch`'s `Categorical` class and add an optional mask argument.
+The idea is simple; we overload the `PyTorch`'s `Categorical` class and add an optional mask argument.
 {{< math.inline >}}
 <p>
 If the mask (boolean) is present, we replace the logit values masked by \(-\infty\).
 </p>
 {{</ math.inline >}}
 However, we represent the logits using `float32`, so we have to replace the logits associated with the impossible actions with the minimum value represented in 32 bits.
-In `Pytorch` we get this value with the following command:  `torch.finfo(torch.float.dtype).min` and the value is `-3.40e+38`.
+In `PyTorch` we get this value with the following command:  `torch.finfo(torch.float.dtype).min` and the value is `-3.40e+38`.
 
 Finally, in policy-based approaches for some algorithms such as Proximal Policy Optimization (PPO) [12], it is necessary to compute the probability distribution entropy at the output of the model.
 In our case, we will compute the entropy only of the available actions. 
@@ -131,6 +132,7 @@ from einops import  reduce
 
 
 class CategoricalMasked(Categorical):
+
     def __init__(self, logits: torch.Tensor, mask: Optional[torch.Tensor] = None):
         self.mask = mask
         self.batch, self.nb_action = logits.size()
@@ -170,7 +172,7 @@ print(mask) # False -> mask action
 # tensor([[False, False,  True],
 #         [ True,  True, False]])
 ```
-We will compare in the following code block an action head with or without mask.
+We will compare in the following code block an action head with and without masking.
 ```python 
 head = CategoricalMasked(logits=logits_or_qvalues)
 print(head.probs) # Impossible action are not masked
@@ -196,27 +198,27 @@ We can observe that when we apply the mask, the probabilities associated with im
 
 Finally, when we don't include the impossible actions in the entropy computation, we have consistent values. This corrected entropy computation allows an agent to maximize his exploration only on valid actions. 
 
-What a cool trick!
+Such a cool trick!
 
 ----
 
 # Feature level 
 
-Open ai introduced masking at the feature extraction level in the paper Hide and seek [8]. Each object in the scene is embedded and passed into a masked attention block. Similar to the one proposed in the paper, "Attention is all you need" [5] except that the attention is not computed over time but between the **scene's objects**. The object will be **masked** during the attention computation if it is not in the agent's field of view.
+Open AI introduced masking at the feature extraction level in the paper Hide and seek [8]. Each object in the scene is embedded and passed into a masked attention block. Similar to the one proposed in the paper, "Attention is all you need" [5] except that the attention is not computed over time but between the **scene's objects**. The object will be **masked** during the attention computation if it is not in the agent's field of view.
 
 If this is still unclear to you, don't worry, we will explain it step by step using figure and code.
 
 **Example**:
 
-Let us suppose a grid world where the agent is a panda :panda: . His objective is to eat the watermelon :watermelon: and avoid the dragon :dragon:  and the scorpion :scorpion:.
+Let us suppose a grid world where the agent is a panda :panda:. His objective is to eat the watermelon :watermelon: and avoid the dragon :dragon: as well as the scorpion :scorpion:.
 
 {{< figure library="true" src="/img/masking-rl/grid_rl_no_tree.png" lightbox="true" >}}
 *Figure 2 : Grid world with 4 objects: panda :panda:, watermelon :watermelon:, scorpion :scorpion: and dragon :dragon:*
 
-A vector of dimension 3 represents each object. The first component of the vector corresponds to its position on the x-axis in the grid. The second corresponds to its position on the y-axis in the grid. Finally, the vector's last element corresponds to the type of object (0: panda :panda:, 1: watermelon :watermelon:, 2: scorpion :scorpion:, 3: dragon :dragon:).
+Each object is represented by a vector of dimension 3. The first component of the vector corresponds to its position on the x-axis in the grid. The second corresponds to its position on the y-axis in the grid. Finally, the vector's last element corresponds to the type of object (0: panda :panda:, 1: watermelon :watermelon:, 2: scorpion :scorpion:, 3: dragon :dragon:).
 
 
-We can represent this observation as a set as follow:
+We can represent this observation as a set as follows:
 $$
 s_{t} = \\{
 \begin{pmatrix}
@@ -246,7 +248,7 @@ $$
 Let us take the panda's point of view for this observation he has in his field of view all the elements of the scene. Therefore we can compute the attention score two by two between all the objects in the scene (Illustrated in *figure 5*).
 
 {{< figure library="true" src="/img/masking-rl/grid_4_elem_all.svg" lightbox="true" >}}
-*Figure 3 : Self attention computation graph when the panda :panda: sees all other objects*
+*Figure 3 : Self-attention computation graph when the panda :panda: sees all other objects*
 
 Here, we will implement a tensor in a few lines representing the observation we have presented above.
 
@@ -263,9 +265,9 @@ print(observation.size())
 {{< figure library="true" src="/img/masking-rl/grid_rl.png" lightbox="true" >}}
 *Figure 4 : Grid world with 4 objects: a panda, a watermelon, a scorpion and a dragon and three trees that hide the scorpion*
 
-The scene in *figure 5* is similar to *figure 2*; however, 3 trees obstruct the panda's vision, and he cannot see the scorpion now.  In this configuration, attention computation follows :
-The panda :panda:, watermelon :watermelon:, and dragon :dragon: compute the attention score between themselves and the other objects **excepted** the scorpion :scorpion:.
-Whereas the scorpion :scorpion: computes attention scores between itself and all other objects.
+The scene in *figure 5* is similar to *figure 2*; however, 3 trees obstruct the panda's vision, and he cannot see the scorpion now. In this configuration, attention computation is as follows:
+the panda :panda:, watermelon :watermelon:, and dragon :dragon: compute the attention score between themselves and the other objects **excepted** the scorpion :scorpion:.
+Meanwhile, the scorpion :scorpion: computes attention scores between itself and all other objects.
 
 {{< figure library="true" src="/img/masking-rl/grid_4_elem_scorpion_nope.svg" lightbox="true" >}}
 *Figure 5 : Self attention computation graph when the panda :panda: see all objects except the scorpion :scorpion:*
@@ -312,7 +314,7 @@ The attention cards result from this block of operation: \(\operatorname{softmax
 We are interested in these maps because they will allow us to observe the effects of masking.
 {{< math.inline >}}
 <p>
-The masking concept for auto attention is the same as for action masking in the case of policy-based algorithms, by masking the values to \(-\infty\) associated with illegal connections between the normalized scalar product and the softmax.
+The masking concept for auto-attention is the same as for action masking in the case of policy-based algorithms, by masking the values to \(-\infty\) associated with illegal connections between the normalized scalar product and the softmax.
 </p>
 {{</ math.inline >}}
 
@@ -329,6 +331,7 @@ from einops import rearrange, reduce
 
 
 class MultiHeadAttention(nn.Module):
+
     def __init__(self, dim: int, heads: int = 8, dim_head: int = 64):
         super().__init__()
         inner_dim = dim_head * heads
@@ -372,7 +375,7 @@ class MultiHeadAttention(nn.Module):
 ```
 
 One of the really cool things about attention is that you can observe the **pairwise interdependence** (attention score) between each input set element. We will compare the attention map's differences with and without the mask in the next two figures. I invite you to move the mouse over the figures to get more details on each element of these attention maps. The second element returned from our `MultiHeadAttention` layer corresponds to this attention map.
-Instantiating our multi-head attention layer, we fixed the dim value at 3 because a vector of dimension 3 describes our set elements. We fix the number of heads at 1 for the example. Finally, the size of the heads is fixed at 8.
+Instantiating our multi-head attention layer, we fixed the dim value at 3 because a vector of dimension 3 describes our set elements. We fix the number of heads to 1 for the example. Finally, the size of the heads is fixed at 8.
 
 ```python
 module = MultiHeadAttention(dim=3, heads = 1,  dim_head = 8)
@@ -388,14 +391,14 @@ print(attention_map_without_mask.size())
 # torch.Size([1, 1, 4, 4])  batch size, nb head, nb elem set, nb elem set
 ```
 
-f you hover the mouse over all the attention map elements, all of them have an attention value different than 0. This means there are no illegal connections for the output representation's computation. 
+If you hover the mouse over all the attention map elements, all of them have an attention value that is positive. This means there are no illegal connections for the output representation's computation. 
 {{< load-plotly >}}
 
 {{< plotly json="/files/plotly/masking-rl/attention_without_mask.json" height="450px" >}}
 
 *Figure 7 : Attention card **without** mask*
 
-Figure 4 shows the panda sees all other objects except the scorpion. We will provide the observation and the **mask** to exclude the panda :panda:, the scorpion :scorpion:, the watermelon :watermelon:, and the dragon :dragon: in the attention computation.
+Figure 4 shows that the panda sees all other objects except for the scorpion. We will provide the observation and the **mask** to exclude the panda :panda:, the scorpion :scorpion:, the watermelon :watermelon:, and the dragon :dragon: in the attention computation.
 ```python
 # Self attention with mask
 output_with_mask, attention_map_with_mask = module(observation, mask)
@@ -404,13 +407,13 @@ print(output_with_mask.size())
 print(attention_map_with_mask.size())
 # torch.Size([1, 1, 4, 4])  batch size, nb head, nb elem set, nb elem set
 ```
-Suppose you hover with your mouse over the column (key) associated with the scorpion. In that case, you will observe that the attention score is null except for itself (figure 5). The mask has removed illegal connections between the panda :panda:, the watermelon :watermelon:, and the dragon :dragon: toward the scorpion :scorpion:.
+Suppose you hover with your mouse over the column (key) associated with the scorpion. In that case, you will observe that the attention score is nil except for itself (figure 5). The mask has removed illegal connections between the panda :panda:, the watermelon :watermelon:, and the dragon :dragon: toward the scorpion :scorpion:.
 
 {{< plotly json="/files/plotly/masking-rl/attention_with_mask.json" height="450px" >}}
 
 *Figure 8 : Attention card **with** mask*
 
-We have seen in the two previous figures that the attention maps are different. Therefore, the outputs will be different. Let us make some sanitary checks.
+We have seen in the two previous figures that the attention maps are different. Therefore, the outputs will be different. Let us make some sanity checks.
 ```python
 # Equality test
 torch.eq(output_without_mask, output_with_mask)
@@ -459,7 +462,7 @@ $$
 
 
 
-The policy network output is an action map that for each coordinate contains a probability distribution of actions, regardless of the presence or absence of an agent.
+The policy network output is an action map where each coordinate is associated with a probability distribution of actions, regardless of the presence or absence of an agent.
 
 The **mask**'s role will be to filter the grid to compute the joint entropy and log probabilities, taking into account only where the agents are. 
 
@@ -615,12 +618,12 @@ It is also possible to combine this mask with the action mask to manage impossib
 # Conclusion
 
 This article intends to show you different uses of masks in reinforcement learning.
-When we face more complex environments than toy environments, masks are among the many methods to simplify our lives.
+When we face more complex environments than toy environments, masks are among the many methods that simplify our lives.
 
 We have seen three examples that we can use masks at several neural network or learning process levels.
-There are many different ways of using a mask. I will be curious if you use different methods that I have presented to you.
+There are many different ways of using a mask. I would be curious to know if you use different methods that those which I have presented.
 
-If you have any questions, please do not hesitate to contact me by email or Twitter.
+If you have any questions, please do not hesitate to contact me by email or on Twitter.
 
 ----
 
