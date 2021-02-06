@@ -3,7 +3,6 @@ title: "Masking in Deep Reinforcement Learning"
 date: 2020-10-31T16:20:06+01:00
 math: true
 ---
-
 {{< load-plotly >}}
 
 # Introduction 
@@ -409,6 +408,8 @@ print(attention_map_with_mask.size())
 # torch.Size([1, 1, 4, 4])  batch size, nb head, nb elem set, nb elem set
 ```
 Suppose you hover with your mouse over the column (key) associated with the scorpion. In that case, you will observe that the attention score is nil except for itself (figure 5). The mask has removed illegal connections between the panda :panda:, the watermelon :watermelon:, and the dragon :dragon: toward the scorpion :scorpion:.
+
+{{< load-plotly >}}
 
 {{< plotly json="/files/plotly/masking-rl/attention_with_mask.json" height="450px" >}}
 
