@@ -657,7 +657,3 @@ If you have any questions, please do not hesitate to contact me by email or on T
 [11] [Attention? Attention!](https://lilianweng.github.io/lil-log/2018/06/24/attention-attention.html)
 
 [12] [Proximal Policy Optimization Algorithms](https://arxiv.org/abs/1707.06347)
-
-<script src="https://utteranc.es/client.js" repo="{{ .Site.Params.utterances.repoName }}" issue-term="pathname"
-    label="Comment" theme="github-light" crossorigin="anonymous" async>
-    </script>
