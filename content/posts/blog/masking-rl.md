@@ -15,7 +15,7 @@ I worked on an environment where specific actions are not available at every tim
 
 Let's illustrate the concept of impossible or unavailable action concretely:
 
-Suppose you want to develop an agent to play the Mario Kart video game. Next, assume that the agent has an empty inventory (no banana :banana: or anything). The agent can't execute the action "use the object in the inventory". Limiting the agent to a meaningful choice of actions will allow it to explore more cleverly and provide a better policy.
+Suppose you want to develop an agent to play Mario Kart. Next, assume that the agent has an empty inventory (no banana :banana: or anything). The agent can't execute the action "use the object in the inventory". Limiting the agent to a meaningful choice of actions will allow it to explore more cleverly and provide a better policy.
 
 Now that you understand the concept of impossible or unavailable action, the natural question is: **"How can I manage impossible actions?"** :thinking:
 
