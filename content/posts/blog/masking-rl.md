@@ -658,6 +658,6 @@ If you have any questions, please do not hesitate to contact me by email or on T
 
 [12] [Proximal Policy Optimization Algorithms](https://arxiv.org/abs/1707.06347)
 
-<div class="article-container"></div>
-{{ partial "comments.html" . }}
-</div>
+<script src="https://utteranc.es/client.js" repo="{{ .Site.Params.utterances.repoName }}" issue-term="pathname"
+    label="Comment" theme="github-light" crossorigin="anonymous" async>
+    </script>
