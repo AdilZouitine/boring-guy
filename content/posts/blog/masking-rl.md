@@ -22,7 +22,7 @@ The first solution I implemented was to assign a negative reward if the agent ta
 
 Then I decided to use **action masking**. This method is simple to implement and elegant because it constrains the agent to only take "meaningful" actions.
 
-I have learned that there are many ways to use masks throughout my deep reinforcement learning practice. Masks can be used at any level in the neural network and for different tasks. Unfortunately, few mask implementations for reinforcement learning are available except for this great article by Costa Huang.
+I have learned that there are many ways to use masks throughout my deep reinforcement learning practice. Masks can be used at any level in the neural network and for different tasks. Unfortunately, few mask implementations for reinforcement learning are available except for this great article by Costa Huang [[7](https://arxiv.org/pdf/2006.14171.pdf)].
 
 This blog post's scope is to explain the concept of masking and illustrate it through figures and code.
 Indeed, the masks make it possible to model many constraints that we will see as we go along in this blog post, and the whole process is entirely differentiable.
@@ -43,7 +43,7 @@ Indeed, the masks make it possible to model many constraints that we will see as
 {{< math.inline >}}
 <p>
 The primary function of a mask in deep reinforcement learning is to filter out impossible or unavailable actions.
-For example, in Starcraft II [1] and Dota II [2] the total number of actions for each time step is \(10^{26}\) and \(1,837,080\).
+For example, in Starcraft II and Dota 2 the total number of actions for each time step is \(10^{26}\) and \(1,837,080\).
 However, each time step's possible action space is a small percentage of the available action space. 
 There are thus two advantages to using masking.
 The first one is to avoid giving invalid actions to the environment. The second is that it is a simple method that helps to manage the vast spaces of action by reducing them. 
@@ -52,7 +52,7 @@ The first one is to avoid giving invalid actions to the environment. The second 
 
 
 {{< figure library="true" src="/img/masking-rl/action_masking.svg" lightbox="true" >}}
-*Figure 1 : Visualisation of an action mask at the logit level*
+*Figure 1 : Visualisation of an action mask at the logit level* 
 
 {{< math.inline >}}
 <p>
@@ -62,7 +62,7 @@ The idea behind it is simple. It consists of replacing the logits associated wit
 {{</ math.inline >}}
 
 
-**The question now is, why applying this mask to preventing impossible actions from being selected?**
+**The question now is, why apply this mask prevents the selection of impossible actions?**
 
 1. **Value-based algorithm (Q-Learning)** :
 {{< math.inline >}}
@@ -76,7 +76,7 @@ a = \underset{a \in A}{\operatorname{argmax}} Q(s, . ) \text{.}
 $$
 {{< math.inline >}}
 <p>
-If we apply the action mask, the logits associated with impossible actions will be equal to \(-\infty\), so they will never be the highest value and, therefore, will never be selected. 
+By applying the mask, the Q-values associated with the impossible actions will be equal to \(-\infty\), so they will never be the highest value and, therefore, will never be selected. 
 </p>
 {{</ math.inline >}}
 
@@ -107,7 +107,7 @@ Considering that we have set the value of logits associated with impossible acti
 **Implementation**:
 
 Now let's practice and implement action masking for a discrete action space and a policy-based algorithm.
-I used the paper and the action masking code [7] from Costa Huang as a foundation.
+I used the paper and the action masking code [[7](https://arxiv.org/pdf/2006.14171.pdf)] from Costa Huang as a foundation.
 The idea is simple; we overload the `PyTorch`'s `Categorical` class and add an optional mask argument.
 {{< math.inline >}}
 <p>
@@ -117,7 +117,7 @@ If the mask (boolean) is present, we replace the logit values masked by \(-\inft
 However, we represent the logits using `float32`, so we have to replace the logits associated with the impossible actions with the minimum value represented in 32 bits.
 In `PyTorch` we get this value with the following command:  `torch.finfo(torch.float.dtype).min` and the value is `-3.40e+38`.
 
-Finally, in policy-based approaches for some algorithms such as Proximal Policy Optimization (PPO) [12], it is necessary to compute the probability distribution entropy at the output of the model.
+Finally, in policy-based approaches for some algorithms such as Proximal Policy Optimization (PPO) [[12](https://arxiv.org/abs/1707.06347)], it is necessary to compute the probability distribution entropy at the output of the model.
 In our case, we will compute the entropy only of the available actions. 
 
 
@@ -203,7 +203,7 @@ Such a cool trick!
 
 # Feature level 
 
-Open AI introduced masking at the feature extraction level in the paper Hide and seek [8]. Each object in the scene is embedded and passed into a masked attention block. Similar to the one proposed in the paper, "Attention is all you need" [5] except that the attention is not computed over time but between the **scene's objects**. The object will be **masked** during the attention computation if it is not in the agent's field of view.
+Open AI introduced masking at the feature extraction level in the paper Hide and seek [[8](https://arxiv.org/pdf/1909.07528.pdf)]. Each object in the scene is embedded and passed into a masked attention block. Similar to the one proposed in the paper, "Attention is all you need" [[5](https://arxiv.org/pdf/1706.03762.pdf)] except that the attention is not computed over time but between the **scene's objects**. The object will be **masked** during the attention computation if it is not in the agent's field of view.
 
 If this is still unclear to you, don't worry, we will explain it step by step using figure and code.
 
@@ -284,7 +284,7 @@ print(mask.size())
 ```
 Now that we have our inputs for the multi-head attention layer, it is finally time to dive into the rabbit hole. Self-attention is the **pairwise interdependence** of all elements composing an input.
 
-It is not the scope of this post to explain what attention is and explain in detail each of these operations. If you want to know more, I invite you to read the excellent article of Lilian Weng [11].
+It is not the scope of this post to explain what attention is and explain in detail each of these operations. If you want to know more, I invite you to read the excellent article of Lilian Weng [[11](https://lilianweng.github.io/lil-log/2018/06/24/attention-attention.html)].
 
 {{< figure library="true" src="/img/masking-rl/multi_head_attention.svg" lightbox="true" >}}
 *Figure 6 : On the left are the operations composing the self-attention, on the right are the operations composing the multi-headed attention layer.*
@@ -319,7 +319,7 @@ The masking concept for auto-attention is the same as for action masking in the 
 
 **Implementation**:
 
-Below you will find the multi-head attention layer code, which is strongly inspired by the Luci drains GitHub [9].
+Below you will find the multi-head attention layer code, which is strongly inspired by the Luci drains GitHub [[9](https://github.com/lucidrains)].
 
 ```python
 from typing import Optional, Tuple
@@ -374,7 +374,8 @@ class MultiHeadAttention(nn.Module):
 ```
 
 One of the really cool things about attention is that you can observe the **pairwise interdependence** (attention score) between each input set element. We will compare the attention map's differences with and without the mask in the next two figures. I invite you to move the mouse over the figures to get more details on each element of these attention maps. The second element returned from our `MultiHeadAttention` layer corresponds to this attention map.
-Instantiating our multi-head attention layer, we fixed the dim value at 3 because a vector of dimension 3 describes our set elements. We fix the number of heads to 1 for the example. Finally, the size of the heads is fixed at 8.
+
+Now, let's instantiating our multi-head attention layer, we fixed the dim value at 3 because a vector of dimension 3 describes our set elements. We fix the number of heads to 1 for the example. Finally, the size of the heads is fixed at 8.
 
 ```python
 module = MultiHeadAttention(dim=3, heads = 1,  dim_head = 8)
@@ -415,7 +416,7 @@ Suppose you hover with your mouse over the column (key) associated with the scor
 
 *Figure 8 : Attention card **with** mask*
 
-We have seen in the two previous figures that the attention maps are different. Therefore, the outputs will be different. Let us make some sanity checks.
+We have seen in the two previous figures (7 & 8) that the attention maps are different. Therefore, the outputs will be different. Let us make some sanity checks.
 ```python
 # Equality test
 torch.eq(output_without_mask, output_with_mask)
@@ -434,7 +435,7 @@ The combination of the masks and the multi-head attention layer allowed to build
 # Agent level
 
 Finally, the masks' last application that I want to present you is to filter agents in a multi-agent configuration in a grid world.
-This method's implementation is in the following paper: "Grid-Wise Control for Multi-Agent Reinforcement Learning in Video Game AI" [4].
+This method's implementation is in the following paper: "Grid-Wise Control for Multi-Agent Reinforcement Learning in Video Game AI" [[4](http://proceedings.mlr.press/v97/han19a/han19a.pdf)].
 
 The abstract of the paper explains well the method of grid control :
 
@@ -483,6 +484,8 @@ The parent method returns a log probability grid. We put the log probabilities i
 {{</ math.inline >}}
 
 Finally, we will average the entropy of each probability distribution of the agents present on the grid for the entropy computation.
+
+**Note**: We could also implement entropy computation on the agents' joint action space to maximize the multi-agent system's entropy and not each agent independently.
 
 ```python
 from typing import Optional
@@ -629,10 +632,6 @@ If you have any questions, please do not hesitate to contact me by email or on T
 
 ----
 
-# Going further
-
-----
-
 # References
 
 [1] [Grandmaster level in StarCraft II using multi-agent reinforcement learning](https://www.nature.com/articles/s41586-019-1724-z)
@@ -658,3 +657,7 @@ If you have any questions, please do not hesitate to contact me by email or on T
 [11] [Attention? Attention!](https://lilianweng.github.io/lil-log/2018/06/24/attention-attention.html)
 
 [12] [Proximal Policy Optimization Algorithms](https://arxiv.org/abs/1707.06347)
+
+<div class="article-container"></div>
+{{ partial "comments.html" . }}
+</div>
