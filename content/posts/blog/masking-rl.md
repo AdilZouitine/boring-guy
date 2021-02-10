@@ -7,6 +7,7 @@ math: true
 {{< load-plotly >}}
 
 # Introduction 
+
 {{< math.inline >}}
 <p>
 I worked on an environment where specific actions are not available at every timestep \(t\) when I started deep reinforcement learning.
