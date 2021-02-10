@@ -631,7 +631,7 @@ When we face more complex environments than toy environments, masks are among th
 We have seen through three examples that we can use masks at several neural network or learning process levels.
 There are many different ways of using a mask. I would be curious to know if you use different methods that those I have presented.
 
-If you have any questions, please do not hesitate to contact me by email or on Twitter.
+If you have any questions, please do not hesitate to contact me by [email](mailto:adilzouitinegm@gmail.com) or on [Twitter](https://twitter.com/AdilZtn).
 
 ----
 
