@@ -109,7 +109,7 @@ Considering that we have set the value of logits associated with impossible acti
 
 Now let's practice and implement action masking for a discrete action space and a policy-based algorithm.
 I used the paper and the action masking code [[7](https://arxiv.org/pdf/2006.14171.pdf)] from Costa Huang as a starting point.
-The idea is simple; we inherit the `PyTorch`'s `Categorical` class and add an optional mask argument.
+The idea is simple, we inherit the `PyTorch`'s `Categorical` class and add an optional mask argument.
 {{< math.inline >}}
 <p>
 We replace the logits of the impossible action by \(-\infty\) when we apply the mask.
