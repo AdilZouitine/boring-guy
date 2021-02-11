@@ -211,7 +211,7 @@ If this is still unclear to you, don't worry, we will explain it step by step us
 
 **Example**:
 
-Let us suppose a grid world where the agent is a panda :panda:. His objective is to eat the watermelon :watermelon: and avoid the dragon :dragon: as well as the scorpion :scorpion:.
+Let's suppose a grid world where the agent is a panda :panda:. His objective is to eat the watermelon :watermelon: and avoid the dragon :dragon: as well as the scorpion :scorpion:.
 
 {{< figure library="true" src="/img/masking-rl/grid_rl_no_tree.png" lightbox="true" >}}
 *Figure 2 : Grid world with 4 objects: panda :panda:, watermelon :watermelon:, scorpion :scorpion: and dragon :dragon:*
@@ -246,7 +246,7 @@ s_{t} = \\{
 $$
 
 
-Let's take the panda's point of view,  for this observation he has in his field of view all the elements of the scene. Therefore we can compute the attention score two by two between all the objects in the scene (Illustrated in *figure 5*).
+Let's take the panda's point of view,  for this observation he has in his field of view all the elements of the scene. Therefore we can compute the attention score two by two between all the objects in the scene (Illustrated in *figure 3*).
 
 {{< figure library="true" src="/img/masking-rl/grid_4_elem_all.svg" lightbox="true" >}}
 *Figure 3 : Self-attention computation graph when the panda :panda: sees all other objects*
@@ -420,7 +420,7 @@ If you hover over the scorpion  column (key), you'll observe that the attention 
 
 *Figure 8 : Attention map **with** mask*
 
-We have seen in the two previous figures (7 & 8) that the attention maps are different. Therefore, the outputs will be different. Let us make some sanity checks.
+We have seen in the two previous figures (7 & 8) that the attention maps are different. Therefore, the outputs will be different. Let's make some sanity checks.
 ```python
 # Equality test
 torch.eq(output_without_mask, output_with_mask)
