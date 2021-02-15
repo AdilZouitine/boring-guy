@@ -397,6 +397,7 @@ print(attention_map_without_mask.size())
 
 If you hover the mouse over all the attention map elements, all of them have an attention value that is positive. This means there are no illegal connections for the output representation computation. 
 
+
 {{< load-plotly >}}
 
 {{< plotly json="/files/plotly/masking-rl/attention_without_mask.json" height="450px" >}}
