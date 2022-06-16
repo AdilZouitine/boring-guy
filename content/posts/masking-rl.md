@@ -160,7 +160,7 @@ class CategoricalMasked(Categorical):
 The idea of the following code blocks is to show you how to use the action mask. 
 First, we create dummy logits and also dummy masks with the same shape.
 ```python
-logits_or_qvalues = torch.randn((2, 3)) # batch size, nb action
+logits_or_qvalues = torch.randn((2, 3), requires_grad=True) # batch size, nb action
 print(logits_or_qvalues) 
 # tensor([[-1.8222,  1.0769, -0.6567],
 #         [-0.6729,  0.1665, -1.7856]])
