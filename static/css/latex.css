@@ -86,7 +86,7 @@ body {
     font-family: 'Latin Modern', Georgia, Cambria, 'Times New Roman', Times, serif;
     line-height: 1.8;
     /* default value 90 */
-    max-width: 110ch;
+    max-width: 105ch;
     min-height: 100vh;
     overflow-x: hidden;
     margin: 0 auto;
@@ -101,7 +101,7 @@ body {
 
     text-rendering: optimizeLegibility;
     /* I add text size */
-    font-size: 125%;
+    font-size: 120%;
 }
 
 /* Justify and hyphenate all paragraphs */
