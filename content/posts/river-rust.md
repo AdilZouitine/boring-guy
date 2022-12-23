@@ -32,7 +32,7 @@ Taking this idea forward, I developed the [`watermill`](https://github.com/onlin
 For rolling statistics, the window is 1 million and there are 2 million updates.*
 
 
-The significant performance improvement we saw in the proof of concept for the Rust bindings motivated us to integrate Rust into the `stats` module. In the following sections, we will dive into the technical details of how we called a `Rust` struct from `Python` and bind it into the `stats` module, as well as how we built `Python` wheels with the Rust bindings using Github Action CI.
+The significant performance improvement we saw in the proof of concept for the `Rust` bindings motivated us to integrate `Rust` into the `stats` module. In the following sections, we will dive into the technical details of how we called a `Rust` struct from `Python` and bind it into the `stats` module, as well as how we built `Python` wheels with the Rust bindings using Github Action CI.
 
 # Calling a Rust Struct from Python
 To call a `Rust` struct from `Python`, we can use the [`PyO3`](https://github.com/PyO3/pyo3) library, which enables the development of `Python` extensions in `Rust`.
@@ -83,7 +83,7 @@ The full code for the `EWMean` struct is available [here](https://github.com/onl
 The `#[pyclass(module = "river.stats._rust_stats")]` annotation on the `Rust` struct indicates that it will be made available in the `river.stats._rust_stats` module, which corresponds to the `_rust_stats.so` file. This enables the `Rust` struct to be used from `Python` as a module, allowing it to be easily called from `Python`. The `Python` interpreter will load the `.so` file and use it to execute the `Rust` code.
 
 
-To make the methods of our struct available from Python, we can annotate them with `#[pymethods]`. For example, if our `RsEWMean` struct has methods called `new`, `update`, and `get`, we can annotate them this way:
+To make the methods of our struct available from `Python`, we can annotate them with `#[pymethods]`. For example, if our `RsEWMean` struct has methods called `new`, `update`, and `get`, we can annotate them this way:
 
 ```rust
 use pyo3::prelude::*;
@@ -105,7 +105,7 @@ impl RsEWMean {
     }
 }
 ```
-To save and load objects in the `river` library, we use Python's `pickle` module, allowing them to be easily stored and transferred between programs.
+To save and load objects in the `river` library, we use `Python`'s `pickle` module, allowing them to be easily stored and transferred between programs.
 To use `pickle` with our `Rust` struct, we need to ensure that the struct is properly serializable and deserializable. To do this, we can use the `serde` crate and annotate the struct with `#[derive(Serialize, Deserialize)]`. This allows the struct to be serialized and deserialized using the `serialize` and `deserialize` functions provided by `serde`.
 ```rust
 use serde::{Deserialize, Serialize};
@@ -174,7 +174,7 @@ fn _rust_stats(_py: Python, m: &PyModule) -> PyResult<()> {
 }
 ```
 This code defines a `Rust` function called `_rust_stats` that is annotated with the `#[pymodule]` attribute. The `_rust_stats` function takes two arguments: a `Python` object and a reference to a `PyModule` object. The function returns a `PyResult` object, which represents the result of a Rust-to-Python call. If the call is successful, the `Ok` variant of the `PyResult` is returned. If an error occurs, the `Err` variant is returned.
-To add a `Rust` struct called `RsEWMean` to the `_rust_stats` module, call the `add_class` method on the `m` object, which is a reference to the `_rust_stats` Python module. The `add_class` method takes a generic type parameter that specifies the `Rust` class to be added to the module. In this case, the `Rust` class is `RsEWMean`. The `::<>` syntax is used to specify the type parameter. The `add_class` method returns a `PyResult` object, which represents the result of the Rust-to-Python call. If the call is successful, the `Ok` variant of the `PyResult` is returned. If an error occurs, the `Err` variant is returned.
+To add a `Rust` struct called `RsEWMean` to the `_rust_stats` module, call the `add_class` method on the `m` object, which is a reference to the `_rust_stats` `Python` module. The `add_class` method takes a generic type parameter that specifies the `Rust` class to be added to the module. In this case, the `Rust` class is `RsEWMean`. The `::<>` syntax is used to specify the type parameter. The `add_class` method returns a `PyResult` object, which represents the result of the Rust-to-Python call. If the call is successful, the `Ok` variant of the `PyResult` is returned. If an error occurs, the `Err` variant is returned.
 
 Overall, the `_rust_stats` function defines a `Python` module called `_rust_stats `that can be imported and used from `Python`. The module contains a Rust class called `RsEWMean`, which can be accessed and used like any other `Python` class.
 
@@ -303,10 +303,10 @@ The `setup.py` file is used to build and distribute the `Python` package. The `s
 
 The `ext_modules` parameter is used to specify the `Cython` extensions that will be built. `Cython` is a language that allows us to write Python-like code that can be compiled to `C`. In the `setup.py` above, we use `cythonize` to compile the `Cython` extensions from all `.pyx` files in the project.
 
-The `rust_extensions `parameter is used to specify the `Rust` extensions that will be built. The `RustExtension` class is used to define a `Rust` extension, and the binding parameter is used to specify how the `Rust` code will be called from `Python`. In the `setup.py` above, we use `Binding.PyO3` which specifies that we will use the `PyO3` library to call the Rust code from `Python`.
+The `rust_extensions `parameter is used to specify the `Rust` extensions that will be built. The `RustExtension` class is used to define a `Rust` extension, and the binding parameter is used to specify how the `Rust` code will be called from `Python`. In the `setup.py` above, we use `Binding.PyO3` which specifies that we will use the `PyO3` library to call the `Rust` code from `Python`.
 
 
-The command : `python setup.py build_rust --inplace --release`  is used to build a Rust project that is being used from `Python`. The `setup.py` file is a `Python` script that specifies the build instructions for the project, and the `build_rust` argument tells the script to build the `Rust` portion of the project. The `--inplace` flag specifies that the `Rust` project should be built in place, meaning that the built files will be placed in the same directory as the `River` source code. The `--release` flag tells the build tool to build the project in release mode, which enables optimizations and disables debugging information in the resulting binary.
+The command : `python setup.py build_rust --inplace --release`  is used to build a `Rust` project that is being used from `Python`. The `setup.py` file is a `Python` script that specifies the build instructions for the project, and the `build_rust` argument tells the script to build the `Rust` portion of the project. The `--inplace` flag specifies that the `Rust` project should be built in place, meaning that the built files will be placed in the same directory as the `River` source code. The `--release` flag tells the build tool to build the project in release mode, which enables optimizations and disables debugging information in the resulting binary.
 
 --------------
 <!-- - Manifest.in
@@ -436,11 +436,11 @@ Another reason to build a `Python` wheel is to make it easier to distribute the 
 
 Building `Python` wheels that include compiled code can be a painful process for developers. It requires managing multiple build environments and ensuring that the compiled code is compatible with all the different systems the wheel may be installed on. This can be particularly challenging when building wheels for binary extensions that need to be compiled against different versions of the `C` library or other system libraries.
 
-To alleviate this pain, Pypa's `cibuildwheels` tool provides a continuous integration (CI) service that builds wheels for multiple platforms and Python versions. By specifying your package's dependencies and build requirements in a configuration file, developers can easily create wheels compatible with a wide range of systems without the burden of building and testing on multiple platforms themselves.
+To alleviate this pain, Pypa's `cibuildwheels` tool provides a continuous integration (CI) service that builds wheels for multiple platforms and `Python` versions. By specifying your package's dependencies and build requirements in a configuration file, developers can easily create wheels compatible with a wide range of systems without the burden of building and testing on multiple platforms themselves.
 
-In short, `cibuildwheels` is a game changer for developers as it significantly simplifies the often painful process of building Python wheels with compiled code, saving time and resources.
+In short, `cibuildwheels` is a game changer for developers as it significantly simplifies the often painful process of building `Python` wheels with compiled code, saving time and resources.
 
-Here is an example of a `.yml` file that can be used with GitHub Actions to build Python wheels with `Rust` binding using `cibuildwheel`.
+Here is an example of a `.yml` file that can be used with GitHub Actions to build `Python` wheels with `Rust` binding using `cibuildwheel`.
 
 
 ```yaml
@@ -505,7 +505,7 @@ ET VOILÀ ! It work's !
 # Wrap-up
 
 
-This blog post discussed how we extended the `River` `stats` module with Rust using `PyO3`. We motivated the need for better performance in the `River` `stats` module. We explained how we addressed this issue by creating the watermill crate, which contains the `stats` module of `River` implemented in Rust.
+This blog post discussed how we extended the `River` `stats` module with `Rust` using `PyO3`. We motivated the need for better performance in the `River` `stats` module. We explained how we addressed this issue by creating the watermill crate, which contains the `stats` module of `River` implemented in `Rust`.
 
 [We are excited to use `Rust` in the `River`](https://maxhalford.github.io/blog/future-of-river/) codebase for several reasons. `Rust` provides excellent performances, as demonstrated by the significant improvements we saw in the `stats` module. This has allowed us to progress faster and achieve our goals more efficiently.
 
